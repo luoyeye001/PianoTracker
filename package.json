@@ -40,6 +40,12 @@
     "appId": "com.pianotracker.app",
     "productName": "PianoTracker",
     "icon": "resources/icon.ico",
+    "extraResources": [
+      {
+        "from": "resources/obs-overlay",
+        "to": "obs-overlay"
+      }
+    ],
     "directories": {
       "output": "dist"
     },

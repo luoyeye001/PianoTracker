@@ -78,7 +78,7 @@ export function startObsServer(port = 7890): void {
 
   const overlayDir = is.dev
     ? join(process.cwd(), 'resources', 'obs-overlay')
-    : join(electronApp.getAppPath(), '..', 'resources', 'obs-overlay')
+    : join(process.resourcesPath, 'obs-overlay')
 
   app.use('/overlay', express.static(overlayDir))
 
