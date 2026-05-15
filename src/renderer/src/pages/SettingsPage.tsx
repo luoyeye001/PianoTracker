@@ -155,6 +155,34 @@ export function SettingsPage({ settings: { settings, update, reset } }: Props): 
       <button className="settings-reset" onClick={reset}>
         {t('settingsView.reset')}
       </button>
+
+      {/* 关于 */}
+      <section className="settings-section about-section">
+        <div className="settings-section-title">{t('settingsView.aboutSection')}</div>
+        <div className="about-row">
+          <span className="about-app-name">PianoTracker</span>
+          <span className="about-version">v0.1.0</span>
+        </div>
+        <div className="about-row">
+          <span className="about-label">{t('settingsView.aboutAuthor')}</span>
+          <span className="about-value">桃玖</span>
+        </div>
+        <div className="about-row">
+          <span className="about-label">{t('settingsView.aboutLicense')}</span>
+          <span className="about-value">MIT</span>
+        </div>
+        <div className="about-row">
+          <span className="about-label">GitHub</span>
+          <a
+            className="about-link"
+            href="https://github.com/luoyeye001/PianoTracker"
+            target="_blank"
+            rel="noreferrer"
+          >
+            luoyeye001/PianoTracker
+          </a>
+        </div>
+      </section>
       </div>
     </div>
   )

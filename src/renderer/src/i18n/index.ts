@@ -105,7 +105,10 @@ const resources = {
         whiteKey:        '白键',
         blackKey:        '黑键',
         sustainedDesc:   '已松手但踏板保持发音',
-        reset:           '恢复默认值'
+        reset:           '恢复默认值',
+        aboutSection:    '关于',
+        aboutAuthor:     '作者',
+        aboutLicense:    '许可证'
       },
       scale: {
         title:      '调式分析',
@@ -261,7 +264,10 @@ const resources = {
         whiteKey:        'White Key',
         blackKey:        'Black Key',
         sustainedDesc:   'Finger lifted but pedal sustaining',
-        reset:           'Reset to Defaults'
+        reset:           'Reset to Defaults',
+        aboutSection:    'About',
+        aboutAuthor:     'Author',
+        aboutLicense:    'License'
       },
       scale: {
         title:      'Scale Analysis',
@@ -417,7 +423,10 @@ const resources = {
         whiteKey:        '白鍵',
         blackKey:        '黒鍵',
         sustainedDesc:   '指を離したがペダルで発音中',
-        reset:           'デフォルトに戻す'
+        reset:           'デフォルトに戻す',
+        aboutSection:    'このアプリについて',
+        aboutAuthor:     '作者',
+        aboutLicense:    'ライセンス'
       },
       scale: {
         title:      'スケール分析',
