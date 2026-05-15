@@ -39,6 +39,7 @@
   "build": {
     "appId": "com.pianotracker.app",
     "productName": "PianoTracker",
+    "icon": "resources/icon.ico",
     "directories": {
       "output": "dist"
     },
