@@ -5,6 +5,7 @@
   "main": "./out/main/index.js",
   "author": "",
   "license": "MIT",
+  "repository": "https://github.com/luoyeye001/PianoTracker",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
