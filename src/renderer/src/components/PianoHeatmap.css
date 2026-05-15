@@ -1,0 +1,86 @@
+.piano-heatmap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  width: 100%;
+}
+
+.piano-keys {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  height: 120px;
+  gap: 1px;
+}
+
+/* 白键 */
+.piano-key--white {
+  width: 14px;
+  height: 120px;
+  background: #e8e8e8;
+  border: 1px solid #bbb;
+  border-radius: 0 0 4px 4px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.1s;
+}
+
+.piano-key--white::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0 0 4px 4px;
+  background: rgba(108, 142, 191, var(--heat-opacity, 0));
+}
+
+/* 黑键 */
+.piano-key--black {
+  width: 9px;
+  height: 72px;
+  background: #222;
+  border-radius: 0 0 3px 3px;
+  margin-left: -5px;
+  margin-right: -5px;
+  z-index: 1;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.1s;
+}
+
+.piano-key--black::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0 0 3px 3px;
+  background: rgba(108, 142, 191, var(--heat-opacity, 0));
+}
+
+/* 按下时高亮 */
+.piano-key--white.piano-key--active {
+  background: #6c8ebf;
+}
+
+.piano-key--black.piano-key--active {
+  background: #4a6fa5;
+}
+
+/* 图例 */
+.piano-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.piano-legend-bar {
+  width: 80px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, rgba(108, 142, 191, 0.15), rgba(108, 142, 191, 1));
+}

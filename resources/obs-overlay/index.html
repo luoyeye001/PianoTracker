@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>PianoTracker OBS Overlay</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Segoe UI', 'PingFang SC', 'Noto Sans', sans-serif;
+    }
+
+    /* ===== 信息卡片（可定位到四角） ===== */
+    #card-root {
+      position: absolute;
+      padding: 18px;
+    }
+    #card-root.pos-bottom-left  { bottom: 90px; left: 0; }
+    #card-root.pos-bottom-right { bottom: 90px; right: 0; }
+    #card-root.pos-top-left     { top: 0; left: 0; }
+    #card-root.pos-top-right    { top: 0; right: 0; }
+
+    .panel {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      border-radius: 14px;
+      padding: 14px 18px;
+      min-width: 200px;
+      max-width: 360px;
+      border: 1px solid rgba(255,255,255,0.10);
+      transition: background 0.3s;
+    }
+    .theme-dark    { color: #e2e8f0; }
+    .theme-light   { color: #1a202c; border-color: rgba(0,0,0,0.12); }
+    .theme-minimal { color: #e2e8f0; border-color: transparent; }
+
+    /* 顶行 */
+    .row-top { display: flex; align-items: center; gap: 10px; }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #444;
+      flex-shrink: 0;
+    }
+    .dot--connected { background: #4ade80; box-shadow: 0 0 5px #4ade80; }
+    .dot--active    { background: #f87171; box-shadow: 0 0 5px #f87171; animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0%,100% { opacity:1; }
+      50%      { opacity:0.35; }
+    }
+
+    .timer {
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      opacity: 0.9;
+    }
+
+    .streak-badge {
+      margin-left: auto;
+      font-size: 12px;
+      color: #fbbf24;
+      font-weight: 700;
+    }
+
+    .chord-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      opacity: 0.4;
+    }
+
+    .chord-name {
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    .theme-dark    .chord-name { color: #60a5fa; }
+    .theme-light   .chord-name { color: #1d4ed8; }
+    .theme-minimal .chord-name { color: #93c5fd; }
+    .chord-name--empty { opacity: 0.2; }
+
+    .chord-quality { font-size: 11px; opacity: 0.5; margin-top: 1px; }
+
+    .last-chord { font-size: 11px; opacity: 0.4; }
+    .last-chord span { opacity: 0.7; }
+
+    .stats-row {
+      display: flex;
+      gap: 14px;
+      font-size: 11px;
+      opacity: 0.45;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding-top: 7px;
+      margin-top: 2px;
+    }
+    .theme-light .stats-row { border-top-color: rgba(0,0,0,0.08); }
+    .stats-row span { opacity: 1; font-weight: 600; }
+
+    /* ===== 钢琴：固定底部全宽，独立于卡片 ===== */
+    #piano-wrap {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100vw;
+      height: 80px;
+      z-index: 100;
+    }
+
+    #piano-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- 信息卡片 -->
+  <div id="card-root" class="pos-bottom-left">
+    <div class="panel theme-dark" id="panel">
+
+      <div class="row-top" id="row-top">
+        <div class="dot" id="dot"></div>
+        <div class="timer" id="timer">--:--</div>
+        <div class="streak-badge" id="streak-badge"></div>
+      </div>
+
+      <div id="chord-section">
+        <div class="chord-label">CHORD</div>
+        <div class="chord-name chord-name--empty" id="chord-name">—</div>
+        <div class="chord-quality" id="chord-quality"></div>
+      </div>
+
+      <div class="last-chord hidden" id="last-chord-row"></div>
+
+      <div class="stats-row" id="stats-row">
+        <div id="today-cell">今日 <span id="today-min">0</span>m</div>
+        <div id="streak-cell">连续 <span id="streak-days">0</span> 天</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 钢琴 -->
+  <div id="piano-wrap">
+    <canvas id="piano-canvas"></canvas>
+  </div>
+
+  <script>
+    /* ========= 工具 ========= */
+    function pad(n) { return String(n).padStart(2,'0') }
+    function fmt(s) {
+      const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60
+      return h>0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`
+    }
+    function show(id, v) { document.getElementById(id)?.classList.toggle('hidden', !v) }
+
+    /* ========= 钢琴布局 ========= */
+    const FIRST = 21, LAST = 108
+    const WHITE_PCS = new Set([0,2,4,5,7,9,11])
+
+    const whiteIdx = new Map()
+    let wi = 0
+    for (let n = FIRST; n <= LAST; n++) {
+      if (WHITE_PCS.has(n%12)) whiteIdx.set(n, wi++)
+    }
+    const totalWhite = wi
+
+    // layout: 每个 note → { note, isBlack, wLeft(白键索引), wRight }
+    const layout = []
+    for (let note = FIRST; note <= LAST; note++) {
+      if (WHITE_PCS.has(note%12)) {
+        layout.push({ note, isBlack: false, wIdx: whiteIdx.get(note) })
+      } else {
+        let prev = note-1; while (!whiteIdx.has(prev)) prev--
+        let next = note+1; while (!whiteIdx.has(next)) next++
+        layout.push({ note, isBlack: true, prevW: whiteIdx.get(prev), nextW: whiteIdx.get(next) })
+      }
+    }
+
+    /* rgba → velocity 调亮 */
+    function applyVelocity(color, velocity) {
+      const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]+)?\)/)
+      if (!m) return color
+      const r=+m[1], g=+m[2], b=+m[3], a=m[4]!==undefined?+m[4]:1
+      const blend = 0.35 + (velocity/127)*0.65
+      return `rgba(${Math.round(r*blend+255*(1-blend))},${Math.round(g*blend+255*(1-blend))},${Math.round(b*blend+255*(1-blend))},${a})`
+    }
+
+    /* Canvas 绘制钢琴 */
+    const canvas = document.getElementById('piano-canvas')
+    const ctx = canvas.getContext('2d')
+
+    function drawPiano(activeNotes, sustainedNotes, c) {
+      const W = canvas.width, H = canvas.height
+      const sustainSet = new Set(sustainedNotes)
+
+      const wPressed   = c.whiteKeyPressedColor   || 'rgba(66,153,225,1)'
+      const bPressed   = c.blackKeyPressedColor   || 'rgba(49,103,170,1)'
+      const wSustained = c.whiteKeySustainedColor || 'rgba(100,160,230,0.55)'
+      const bSustained = c.blackKeySustainedColor || 'rgba(70,110,180,0.55)'
+
+      const wW = W / totalWhite
+      const bW = wW * 0.58
+      const wH = H
+      const bH = Math.round(H * (50 / 80))   // 50px / 80px = 与 RealtimePiano.css 一致
+
+      // 白键基色 与 RealtimePiano.css 保持一致
+      const wBase   = '#d6d6d6'
+      const wBorder = '#999'
+      const bBase   = '#1e1e1e'
+      const bBorder = '#111'
+
+      ctx.clearRect(0, 0, W, H)
+
+      // — 白键 —
+      for (const k of layout) {
+        if (k.isBlack) continue
+        const x = k.wIdx * wW
+        const velocity = activeNotes[k.note]
+        const sustained = sustainSet.has(k.note)
+
+        // 底色
+        ctx.fillStyle = wBase
+        ctx.fillRect(x, 0, wW - 1, wH)
+
+        // 右边框
+        ctx.fillStyle = wBorder
+        ctx.fillRect(x + wW - 1, 0, 1, wH)
+
+        // 按压/延音叠加（backgroundImage 方式：用同色填充，alpha 自然叠加在底色上）
+        if (velocity !== undefined && !sustained) {
+          ctx.fillStyle = applyVelocity(wPressed, velocity)
+          ctx.fillRect(x, 0, wW - 1, wH)
+        } else if (sustained) {
+          ctx.fillStyle = wSustained
+          ctx.fillRect(x, 0, wW - 1, wH)
+        }
+      }
+
+      // — 黑键 —
+      for (const k of layout) {
+        if (!k.isBlack) continue
+        const centerFrac = (k.prevW + 1 + k.nextW) / 2 / totalWhite
+        const x = centerFrac * W - bW / 2
+        const velocity = activeNotes[k.note]
+        const sustained = sustainSet.has(k.note)
+
+        // 底色
+        ctx.fillStyle = bBase
+        ctx.fillRect(x, 0, bW, bH)
+
+        // 边框
+        ctx.strokeStyle = bBorder
+        ctx.lineWidth = 1
+        ctx.strokeRect(x + 0.5, 0.5, bW - 1, bH - 1)
+
+        // 按压/延音
+        if (velocity !== undefined && !sustained) {
+          ctx.fillStyle = applyVelocity(bPressed, velocity)
+          ctx.fillRect(x, 0, bW, bH)
+        } else if (sustained) {
+          ctx.fillStyle = bSustained
+          ctx.fillRect(x, 0, bW, bH)
+        }
+      }
+    }
+
+    /* ========= 响应式 canvas 大小 ========= */
+    function resizeCanvas() {
+      canvas.width  = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+    }
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+
+    /* ========= 应用状态到 DOM ========= */
+    function applyState(s) {
+      const c = s.config || {}
+      const theme = c.theme || 'dark'
+
+      // 卡片位置（底部时给钢琴让出空间）
+      const cardRoot = document.getElementById('card-root')
+      const atBottom = (c.position||'bottom-left').startsWith('bottom')
+      cardRoot.className = `pos-${c.position||'bottom-left'}`
+      // 如果钢琴显示且卡片在底部，上移让出位置
+      const pianoVisible = c.showPiano !== false
+      if (atBottom && pianoVisible) {
+        cardRoot.style.marginBottom = '0'
+      }
+
+      // 主题 & 背景
+      const panel = document.getElementById('panel')
+      panel.className = `panel theme-${theme}`
+      const alpha = ((c.bgOpacity??72)/100).toFixed(2)
+      panel.style.background = theme==='light'
+        ? `rgba(255,255,255,${alpha})`
+        : theme==='minimal' ? 'transparent'
+        : `rgba(10,10,20,${alpha})`
+
+      // 字体
+      document.getElementById('chord-name').style.fontSize = `${c.fontSize||36}px`
+
+      // 连接点
+      show('dot', c.showDot!==false)
+      const dot = document.getElementById('dot')
+      dot.className = s.isSessionActive ? 'dot dot--active'
+        : s.isConnected ? 'dot dot--connected' : 'dot'
+
+      // 计时器
+      show('timer', c.showTimer!==false)
+      document.getElementById('timer').textContent = s.isSessionActive ? fmt(s.elapsed) : '--:--'
+
+      // 和弦
+      show('chord-section', c.showChord!==false)
+      const nameEl = document.getElementById('chord-name')
+      if (s.currentChord) {
+        nameEl.textContent = s.currentChord
+        nameEl.className = 'chord-name'
+        document.getElementById('chord-quality').textContent = s.currentChordQuality||''
+      } else {
+        nameEl.textContent = '—'
+        nameEl.className = 'chord-name chord-name--empty'
+        document.getElementById('chord-quality').textContent = ''
+      }
+
+      // 上一个和弦
+      const lastRow = document.getElementById('last-chord-row')
+      const showLast = c.showLastChord!==false && !!s.lastChord
+      lastRow.classList.toggle('hidden', !showLast)
+      if (showLast) lastRow.innerHTML = `上一个：<span>${s.lastChord}</span>`
+
+      // 统计行
+      const hasStats = c.showTodayMin!==false || c.showStreak!==false
+      show('stats-row', hasStats)
+      show('today-cell', c.showTodayMin!==false)
+      show('streak-cell', c.showStreak!==false)
+      document.getElementById('today-min').textContent = s.totalPracticeToday||0
+      document.getElementById('streak-days').textContent = s.streak||0
+
+      // streak badge
+      const showBadge = c.showStreak!==false && s.streak>0
+      const badge = document.getElementById('streak-badge')
+      badge.classList.toggle('hidden', !showBadge)
+      if (showBadge) badge.textContent = `🔥 ${s.streak}`
+
+      // top row
+      show('row-top', (c.showDot!==false)||(c.showTimer!==false)||showBadge)
+
+      // 钢琴
+      const pianoWrap = document.getElementById('piano-wrap')
+      pianoWrap.classList.toggle('hidden', !pianoVisible)
+      if (pianoVisible) {
+        drawPiano(s.activeNotes||{}, s.sustainedNotes||[], c)
+      }
+    }
+
+    /* ========= SSE 连接 ========= */
+    function connect() {
+      const es = new EventSource('/events')
+      es.onmessage = (e) => {
+        try { applyState(JSON.parse(e.data)) } catch {}
+      }
+      es.onerror = () => {
+        es.close()
+        // 断线后 1s 重连
+        setTimeout(connect, 1000)
+      }
+    }
+
+    connect()
+  </script>
+</body>
+</html>

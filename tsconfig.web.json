@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@renderer/*": ["./src/renderer/src/*"]
+    },
+    "strict": true,
+    "target": "ESNext"
+  },
+  "include": ["src/renderer/src/**/*"]
+}

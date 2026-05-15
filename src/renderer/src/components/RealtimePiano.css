@@ -1,0 +1,37 @@
+.rt-piano {
+  width: 100%;
+  padding: 10px 12px 14px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.rt-piano-keys {
+  position: relative;
+  height: 80px;
+  width: 100%;
+}
+
+.rt-key {
+  position: absolute;
+  top: 0;
+  border-radius: 0 0 4px 4px;
+  transition: background 0.04s;
+  box-sizing: border-box;
+}
+
+/* 白键 */
+.rt-key--white {
+  height: 80px;
+  background: #d6d6d6;
+  border: 1px solid #999;
+  z-index: 1;
+}
+
+/* 黑键：高度 55%，z-index 高于白键 */
+.rt-key--black {
+  height: 50px;
+  background: #1e1e1e;
+  border: 1px solid #111;
+  z-index: 2;
+}

@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+out/
+dist/
+
+# Electron cache
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# Local env
+.env
+.env.local

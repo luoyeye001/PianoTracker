@@ -1,0 +1,309 @@
+.practice-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.practice-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 32px;
+  padding: 24px 32px 16px;
+  overflow: hidden;
+}
+
+/* 今日计划横幅 */
+.today-plan-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.today-plan-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.today-plan-goal {
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.today-plan-note {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 和弦确认 badge */
+.chord-confirmed-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #5bc27a;
+  background: #5bc27a18;
+  border: 1px solid #5bc27a55;
+  border-radius: 10px;
+  padding: 1px 7px;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+
+/* ── 练习控制栏 ── */
+.session-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.session-bar-spacer {
+  flex: 1;
+}
+
+.session-btn {
+  padding: 8px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.session-btn:active { transform: scale(0.97); }
+
+.session-btn--start {
+  background: var(--accent);
+  color: #fff;
+}
+.session-btn--start:hover { opacity: 0.85; }
+
+.session-btn--stop {
+  background: #c0392b;
+  color: #fff;
+}
+.session-btn--stop:hover { opacity: 0.85; }
+
+.session-timer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+
+.session-timer-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e74c3c;
+  box-shadow: 0 0 6px #e74c3caa;
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* 未连接 */
+.practice-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.practice-empty-icon { font-size: 56px; opacity: 0.35; margin-bottom: 8px; }
+.practice-empty-hint { font-size: 13px; opacity: 0.55; }
+
+/* 通用标签 */
+.section-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── 和弦行 ── */
+.chord-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.chord-current {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chord-name-large {
+  font-size: 80px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-secondary);
+  letter-spacing: -2px;
+  transition: color 0.15s;
+}
+.chord-current--active .chord-name-large { color: var(--accent); }
+
+.chord-quality {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+/* 右侧列：踏板 + 上一个和弦 */
+.chord-last-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  min-width: 170px;
+}
+
+/* 延音踏板徽章 */
+.sustain-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  transition: all 0.2s;
+}
+.sustain-badge--on {
+  color: #5bc27a;
+  border-color: #5bc27a66;
+  background: #5bc27a11;
+}
+.sustain-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.sustain-badge--on .sustain-dot {
+  background: #5bc27a;
+  box-shadow: 0 0 5px #5bc27a99;
+}
+
+/* 上一个和弦 */
+.chord-last {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.chord-last .section-label { justify-content: flex-end; }
+
+.chord-name-medium {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  line-height: 1;
+  letter-spacing: -1px;
+  opacity: 0.5;
+}
+.chord-name--empty { opacity: 0.2; font-weight: 300; }
+
+/* ── 音符行 ── */
+.note-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.note-section { display: flex; flex-direction: column; }
+
+.divider {
+  width: 1px;
+  height: 48px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.last-note-name {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  line-height: 1;
+  transition: color 0.1s;
+  font-variant-numeric: tabular-nums;
+}
+.last-note-name--active { color: var(--text-primary); }
+
+.note-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  margin-top: 4px;
+}
+
+.sustained-hint {
+  font-size: 10px;
+  opacity: 0.6;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.active-notes-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 36px;
+}
+
+.active-notes-empty {
+  color: var(--text-secondary);
+  opacity: 0.3;
+  font-size: 24px;
+  font-weight: 300;
+}
+
+.active-note-chip {
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 16px;
+  animation: pop-in 0.08s ease-out;
+}
+
+/* 踏板延音的音符 chip：半透明样式 */
+.active-note-chip--sustained {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  opacity: 0.65;
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}

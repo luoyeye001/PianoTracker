@@ -1,0 +1,102 @@
+.practice-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.heatmap-stats {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.heatmap-streak {
+  color: #f0a500;
+  font-weight: 600;
+}
+
+.heatmap-grid-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.heatmap-months {
+  display: grid;
+  grid-auto-flow: column;
+  padding-left: 24px;
+  gap: 2px;
+}
+
+.heatmap-month-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.heatmap-body {
+  display: flex;
+  gap: 4px;
+}
+
+.heatmap-days {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 2px;
+}
+
+.heatmap-day-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  height: 12px;
+  line-height: 12px;
+  width: 16px;
+  text-align: right;
+}
+
+.heatmap-cells {
+  display: flex;
+  gap: 2px;
+}
+
+.heatmap-week {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.heatmap-cell--l0 { background: var(--bg-card); border: 1px solid var(--border); }
+.heatmap-cell--l1 { background: #1a4a2e; }
+.heatmap-cell--l2 { background: #1f6b3a; }
+.heatmap-cell--l3 { background: #26a148; }
+.heatmap-cell--l4 { background: #3dd668; }
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.heatmap-cell--clickable {
+  cursor: pointer;
+}
+.heatmap-cell--clickable:hover {
+  opacity: 0.75;
+  transform: scale(1.2);
+}
+
+.heatmap-cell--selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

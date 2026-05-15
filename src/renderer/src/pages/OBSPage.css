@@ -1,0 +1,257 @@
+.obs-page {
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.obs-page::-webkit-scrollbar { width: 4px; }
+.obs-page::-webkit-scrollbar-track { background: transparent; }
+.obs-page::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.obs-page::-webkit-scrollbar-thumb:hover { background: #555; }
+
+.obs-inner {
+  max-width: 580px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.obs-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* URL 区域 */
+.obs-url-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.obs-url-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.obs-url-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.obs-url {
+  flex: 1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--accent);
+  font-family: 'Consolas', 'Courier New', monospace;
+  user-select: all;
+}
+
+.obs-copy-btn {
+  padding: 7px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.obs-copy-btn:hover { opacity: 0.85; }
+
+.obs-url-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Section */
+.obs-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.obs-section-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+/* 行 */
+.obs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.obs-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.obs-row-label {
+  font-size: 14px;
+}
+
+.obs-row-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* 开关 */
+.obs-toggle {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: #333;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.obs-toggle--on { background: var(--accent); }
+
+.obs-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  display: block;
+}
+.obs-toggle--on .obs-toggle-knob {
+  transform: translateX(18px);
+}
+
+/* 分段选择 */
+.obs-segment {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.obs-segment-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.obs-segment-btn + .obs-segment-btn {
+  border-left: 1px solid var(--border);
+}
+.obs-segment-btn--active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* 滑块行 */
+.obs-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.obs-slider {
+  width: 130px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.obs-slider-val {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  font-weight: 600;
+  min-width: 42px;
+  text-align: right;
+}
+
+/* 预览提示 */
+.obs-preview-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* 键色组 */
+.obs-color-group {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.obs-color-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.obs-color-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.obs-color-swatch-wrap {
+  position: relative;
+}
+
+.obs-color-popover {
+  right: 0;
+  left: auto;
+}
+
+/* 从设置同步按钮 */
+.obs-sync-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.obs-sync-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}

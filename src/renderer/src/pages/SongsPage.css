@@ -1,0 +1,156 @@
+.songs-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px 32px;
+  height: 100%;
+  overflow-y: auto;
+  max-width: 720px;
+}
+
+.songs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.songs-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.songs-add-btn {
+  padding: 8px 18px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.songs-add-btn:hover { opacity: 0.85; }
+
+/* 表单 */
+.songs-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.songs-input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  padding: 8px 12px;
+  outline: none;
+  font-family: inherit;
+  resize: none;
+}
+.songs-input:focus { border-color: var(--accent); }
+
+.songs-textarea { min-height: 60px; }
+
+.songs-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.songs-btn {
+  padding: 7px 16px;
+  border-radius: 7px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.songs-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.songs-btn--primary:hover { opacity: 0.85; }
+
+/* 空状态 */
+.songs-empty {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 40px;
+  font-size: 14px;
+}
+
+/* 列表 */
+.songs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.song-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: border-color 0.15s;
+}
+.song-card:hover { border-color: #555; }
+
+/* 状态徽章 */
+.song-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.song-status--not_started {
+  background: #2a2a2a;
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+.song-status--practicing {
+  background: #1a3a5c;
+  color: #5ba3f5;
+  border-color: #2a5a8c;
+}
+.song-status--completed {
+  background: #1a3a28;
+  color: #5bc27a;
+  border-color: #2a5a3a;
+}
+
+.song-info { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.song-title { font-size: 15px; font-weight: 600; }
+.song-composer { font-size: 12px; color: var(--text-secondary); }
+.song-notes { font-size: 12px; color: var(--text-secondary); opacity: 0.7; margin-top: 2px; }
+
+.song-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+.song-action-btn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.song-action-btn:hover { opacity: 1; background: var(--bg-secondary); }
+.song-action-btn--delete:hover { color: #e05555; }
