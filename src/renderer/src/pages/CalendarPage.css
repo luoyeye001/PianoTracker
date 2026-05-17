@@ -3,7 +3,7 @@
   flex-direction: column;
   height: 100%;
   padding: 20px 24px 16px;
-  overflow: hidden;
+  overflow: auto;
   box-sizing: border-box;
 }
 
@@ -87,10 +87,88 @@
   flex-direction: column;
   padding: 6px 7px;
   overflow: hidden;
-  transition: border-color 0.12s;
+  transition: border-color 0.12s, background 0.18s, box-shadow 0.18s;
   min-height: 0;
 }
 .cal-day:hover { border-color: #555; }
+.cal-day--practice-l1 { background: linear-gradient(145deg, #102719, #163824); }
+.cal-day--practice-l2 { background: linear-gradient(145deg, #14341f, #1d5730); }
+.cal-day--practice-l3 { background: linear-gradient(145deg, #174626, #23813f); }
+.cal-day--practice-l4 { background: linear-gradient(145deg, #1c5a2f, #35c864); }
+
+.cal-day--goal-reached {
+  isolation: isolate;
+  background: #17191d;
+  border-color: rgba(255,255,255,0.22);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 10px 24px rgba(255, 95, 109, 0.18);
+  overflow: hidden;
+}
+
+/* 达标态的运动只发生在底层彩色材质里。 */
+.cal-day--goal-reached::after {
+  content: '';
+  position: absolute;
+  inset: -58%;
+  z-index: 0;
+  background:
+    conic-gradient(
+      from 0deg,
+      #ff4d8d,
+      #ff9f1c,
+      #ffe45e,
+      #4ade80,
+      #22d3ee,
+      #60a5fa,
+      #8b5cf6,
+      #ec4899,
+      #ff4d8d
+    );
+  filter: blur(11px) saturate(1.38);
+  opacity: 0.96;
+  animation:
+    aurora-spin var(--rainbow-speed, 11s) linear infinite,
+    aurora-drift calc(var(--rainbow-speed, 11s) * 1.7) ease-in-out infinite;
+}
+
+@keyframes aurora-spin {
+  from { rotate: 0deg; scale: 1.08; }
+  to { rotate: 360deg; scale: 1.08; }
+}
+
+@keyframes aurora-drift {
+  0%   { translate: 0 0; }
+  22%  { translate: var(--rainbow-shift-x, 4%) calc(var(--rainbow-shift-y, 5%) * -0.45); }
+  48%  { translate: calc(var(--rainbow-shift-x, 4%) * -0.55) var(--rainbow-shift-y, 5%); }
+  73%  { translate: calc(var(--rainbow-shift-x, 4%) * 0.35) calc(var(--rainbow-shift-y, 5%) * 0.55); }
+  100% { translate: 0 0; }
+}
+
+
+.cal-day-frost {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.60);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.cal-day--goal-reached .cal-day-num,
+.cal-day--goal-reached .cal-day-note-text,
+.cal-day--goal-reached .cal-day-goal,
+.cal-day--goal-reached .cal-day-complete {
+  color: #102018;
+  position: relative;
+  z-index: 2;
+}
+
+.cal-day--goal-reached .cal-day-practiced {
+  z-index: 2;
+  color: #102018;
+  background: rgba(255,255,255,0.38);
+}
 
 .cal-day--other { opacity: 0.3; }
 
@@ -156,12 +234,19 @@
   padding: 1px 4px;
   border-radius: 4px;
   font-weight: 600;
+  background: rgba(0,0,0,0.22);
+  color: #d9ffe5;
 }
 
-.day-practiced--l1 { background: #1a4a2e; color: #5bc27a; }
-.day-practiced--l2 { background: #1f6b3a; color: #6fd68a; }
-.day-practiced--l3 { background: #26a148; color: #a0f0b4; }
-.day-practiced--l4 { background: #3dd668; color: #0a2010; }
+.cal-day-complete {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #102018;
+}
+
 
 /* 右键菜单 */
 .cal-context-menu {

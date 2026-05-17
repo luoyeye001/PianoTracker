@@ -65,6 +65,23 @@
   gap: 16px;
 }
 
+.song-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.song-picker select {
+  min-width: 150px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 7px 10px;
+}
+
 .session-bar-spacer {
   flex: 1;
 }

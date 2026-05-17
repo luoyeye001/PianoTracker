@@ -37,6 +37,7 @@ interface EditModal {
   plan: PracticePlan | null
 }
 
+
 export function CalendarPage(): JSX.Element {
   const { t } = useTranslation()
   const { dailySummary } = usePracticeHistory()
@@ -144,10 +145,23 @@ export function CalendarPage(): JSX.Element {
 
   const practiceClass = (min: number): string => {
     if (min === 0) return ''
-    if (min < 10) return 'day-practiced--l1'
-    if (min < 20) return 'day-practiced--l2'
-    if (min < 40) return 'day-practiced--l3'
-    return 'day-practiced--l4'
+    if (min < 10) return 'cal-day--practice-l1'
+    if (min < 20) return 'cal-day--practice-l2'
+    if (min < 40) return 'cal-day--practice-l3'
+    return 'cal-day--practice-l4'
+  }
+
+  const goalReached = (cell: DayInfo): boolean =>
+    Boolean(cell.plan && cell.plan.goal_min > 0 && cell.practiceMin >= cell.plan.goal_min)
+
+  const rainbowVars = (dateStr: string): React.CSSProperties => {
+    const seed = dateStr.split('-').reduce((sum, part) => sum + Number(part), 0)
+    return {
+      '--rainbow-shift-x': `${18 + (seed % 17)}%`,
+      '--rainbow-shift-y': `${22 + ((seed * 7) % 19)}%`,
+      '--rainbow-shift-z': `${28 + ((seed * 11) % 21)}%`,
+      '--rainbow-speed': `${9 + (seed % 5)}s`
+    } as React.CSSProperties
   }
 
   const handleContextMenu = (e: React.MouseEvent, cell: DayInfo) => {
@@ -193,9 +207,12 @@ export function CalendarPage(): JSX.Element {
               'cal-day',
               !cell.isCurrentMonth ? 'cal-day--other' : '',
               cell.isToday ? 'cal-day--today' : '',
-              cell.plan ? 'cal-day--has-plan' : ''
+              cell.plan ? 'cal-day--has-plan' : '',
+              practiceClass(cell.practiceMin),
+              goalReached(cell) ? 'cal-day--goal-reached' : ''
             ].join(' ')}
             onContextMenu={(e) => handleContextMenu(e, cell)}
+            style={goalReached(cell) ? rainbowVars(cell.dateStr) : undefined}
           >
             <span className="cal-day-num">{cell.day}</span>
             {cell.plan && (
@@ -209,10 +226,14 @@ export function CalendarPage(): JSX.Element {
               </div>
             )}
             {cell.practiceMin > 0 && (
-              <span className={`cal-day-practiced ${practiceClass(cell.practiceMin)}`}>
+              <span className="cal-day-practiced">
                 {cell.practiceMin}m
               </span>
             )}
+            {goalReached(cell) && (<>
+                <span className="cal-day-frost" />
+                <span className="cal-day-complete">✓</span>
+              </>)}
           </div>
         ))}
       </div>

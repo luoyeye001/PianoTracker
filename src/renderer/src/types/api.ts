@@ -5,6 +5,8 @@ export interface PracticeSession {
   ended_at: number
   duration_s: number
   note_presses: number
+  unique_notes: number
+  chords_recognized: number
   song_id: number | null
 }
 
@@ -12,6 +14,8 @@ export interface DailySummary {
   date: string
   total_s: number
   total_presses: number
+  total_unique_notes: number
+  total_chords_recognized: number
   count: number
 }
 

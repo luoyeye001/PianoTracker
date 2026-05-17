@@ -7,7 +7,7 @@ import { recognizeChord, inversionKey, type ChordResult } from '../utils/chordRe
 import { RealtimePiano } from '../components/RealtimePiano'
 import { ScalePopover } from '../components/ScalePopover'
 import type { UseScaleAnalysisReturn } from '../hooks/useScaleAnalysis'
-import type { PracticePlan } from '../types/api'
+import type { PracticePlan, Song } from '../types/api'
 import type { Settings } from '../hooks/useSettings'
 import './PracticePage.css'
 
@@ -23,17 +23,31 @@ interface Props {
   minHoldMs: number
   scaleAnalysis: UseScaleAnalysisReturn
   settings: Settings
+  activeSongId: number | null
+  onActiveSongChange: (id: number | null, title: string) => void
+  onConfirmedChord: () => void
 }
 
-export function PracticePage({ midi, session, minHoldMs, scaleAnalysis, settings }: Props): JSX.Element {
+export function PracticePage({
+  midi,
+  session,
+  minHoldMs,
+  scaleAnalysis,
+  settings,
+  activeSongId,
+  onActiveSongChange,
+  onConfirmedChord
+}: Props): JSX.Element {
   const { t } = useTranslation()
   const { lastNote, activeNotes, activeNoteVelocities, sustainedNotes, sustainActive, isConnected } = midi
 
-  // 今日计划
+  // 今日计划 + 当前曲目
   const [todayPlan, setTodayPlan] = useState<PracticePlan | null>(null)
+  const [songs, setSongs] = useState<Song[]>([])
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10)
     window.api?.plans.get(today).then(setTodayPlan).catch(() => {})
+    window.api?.songs.list().then(setSongs).catch(() => {})
   }, [])
 
   const currentChord = useMemo(
@@ -64,6 +78,7 @@ export function PracticePage({ midi, session, minHoldMs, scaleAnalysis, settings
       if (currentChord) {
         timerRef.current = setTimeout(() => {
           setConfirmedChord(currentChord)
+          onConfirmedChord()
         }, minHoldMs)
       }
     }
@@ -71,7 +86,7 @@ export function PracticePage({ midi, session, minHoldMs, scaleAnalysis, settings
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [currentChord, minHoldMs]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentChord, minHoldMs, onConfirmedChord]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeNoteNames = Array.from(activeNotes)
     .sort((a, b) => a - b)
@@ -109,7 +124,7 @@ export function PracticePage({ midi, session, minHoldMs, scaleAnalysis, settings
           </div>
         )}
 
-        {/* 练习会话控制栏 + 调式按钮 */}
+        {/* 练习会话控制栏 + 曲目选择 + 调式按钮 */}
         <div className="session-bar">
           {session.isActive ? (
             <>
@@ -126,6 +141,22 @@ export function PracticePage({ midi, session, minHoldMs, scaleAnalysis, settings
               {t('session.start')}
             </button>
           )}
+          <label className="song-picker">
+            <span>{t('songs')}</span>
+            <select
+              value={activeSongId ?? ''}
+              onChange={(e) => {
+                const nextId = e.target.value ? Number(e.target.value) : null
+                const song = songs.find((s) => s.id === nextId)
+                onActiveSongChange(nextId, song?.title ?? '')
+              }}
+            >
+              <option value="">—</option>
+              {songs.map((song) => (
+                <option key={song.id} value={song.id}>{song.title}</option>
+              ))}
+            </select>
+          </label>
           <div className="session-bar-spacer" />
           <ScalePopover
             matches={scaleAnalysis.scaleMatches}

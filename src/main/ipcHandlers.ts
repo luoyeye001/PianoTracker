@@ -9,6 +9,8 @@ export interface PracticeSession {
   ended_at: number
   duration_s: number
   note_presses: number
+  unique_notes: number
+  chords_recognized: number
   song_id: number | null
 }
 
@@ -28,8 +30,8 @@ export function registerIpcHandlers(): void {
   // ── Sessions ──────────────────────────────────────────
   ipcMain.handle('sessions:save', (_, session: Omit<PracticeSession, 'id'>) => {
     const stmt = db.prepare(`
-      INSERT INTO practice_sessions (date, started_at, ended_at, duration_s, note_presses, song_id)
-      VALUES (@date, @started_at, @ended_at, @duration_s, @note_presses, @song_id)
+      INSERT INTO practice_sessions (date, started_at, ended_at, duration_s, note_presses, unique_notes, chords_recognized, song_id)
+      VALUES (@date, @started_at, @ended_at, @duration_s, @note_presses, @unique_notes, @chords_recognized, @song_id)
     `)
     const result = stmt.run(session)
     return result.lastInsertRowid
@@ -46,7 +48,12 @@ export function registerIpcHandlers(): void {
   // 返回每天的练习秒数汇总（用于打卡图）
   ipcMain.handle('sessions:dailySummary', () => {
     return db.prepare(`
-      SELECT date, SUM(duration_s) as total_s, SUM(note_presses) as total_presses, COUNT(*) as count
+      SELECT date,
+             SUM(duration_s) as total_s,
+             SUM(note_presses) as total_presses,
+             SUM(unique_notes) as total_unique_notes,
+             SUM(chords_recognized) as total_chords_recognized,
+             COUNT(*) as count
       FROM practice_sessions
       GROUP BY date
       ORDER BY date

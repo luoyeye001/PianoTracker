@@ -25,6 +25,8 @@ function initSchema(db: Database.Database): void {
       ended_at    INTEGER NOT NULL,       -- Unix ms
       duration_s  INTEGER NOT NULL,       -- 秒
       note_presses INTEGER DEFAULT 0,     -- 总按键次数
+      unique_notes INTEGER DEFAULT 0,      -- 使用过的音符数
+      chords_recognized INTEGER DEFAULT 0, -- 确认识别的和弦数
       song_id     INTEGER REFERENCES songs(id)
     );
 
@@ -49,4 +51,13 @@ function initSchema(db: Database.Database): void {
 
     CREATE INDEX IF NOT EXISTS idx_plans_date ON practice_plans(date);
   `)
+
+  const sessionColumns = db.prepare("PRAGMA table_info(practice_sessions)").all() as { name: string }[]
+  const existing = new Set(sessionColumns.map((c) => c.name))
+  if (!existing.has('unique_notes')) {
+    db.exec('ALTER TABLE practice_sessions ADD COLUMN unique_notes INTEGER DEFAULT 0')
+  }
+  if (!existing.has('chords_recognized')) {
+    db.exec('ALTER TABLE practice_sessions ADD COLUMN chords_recognized INTEGER DEFAULT 0')
+  }
 }

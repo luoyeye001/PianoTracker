@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMidi } from './hooks/useMidi'
 import { usePracticeSession } from './hooks/usePracticeSession'
@@ -24,10 +24,33 @@ function App(): JSX.Element {
   const scaleAnalysis = useScaleAnalysis(midi)
   const { dailySummary } = usePracticeHistory()
   const [page, setPage] = useState<Page>('practice')
+  const [activeSongId, setActiveSongId] = useState<number | null>(null)
+  const [activeSongTitle, setActiveSongTitle] = useState('')
+  const sessionStartCountsRef = useRef<Record<number, number>>({})
+  const sessionChordCountRef = useRef(0)
 
-  // 结束练习时带上总按键次数一起存库
-  const totalPresses = Object.values(midi.notePressCount).reduce((a, b) => a + b, 0)
-  const stopSession = (): void => session.stop(totalPresses)
+  const startSession = (): void => {
+    sessionStartCountsRef.current = { ...midi.notePressCount }
+    sessionChordCountRef.current = 0
+    session.start()
+  }
+
+  const stopSession = (): void => {
+    const deltas = Object.entries(midi.notePressCount)
+      .map(([note, count]) => [Number(note), count - (sessionStartCountsRef.current[Number(note)] ?? 0)] as const)
+      .filter(([, delta]) => delta > 0)
+
+    session.stop({
+      notePresses: deltas.reduce((sum, [, delta]) => sum + delta, 0),
+      uniqueNotes: deltas.length,
+      chordsRecognized: sessionChordCountRef.current,
+      songId: activeSongId
+    })
+  }
+
+  const handleConfirmedChord = useCallback((): void => {
+    if (session.isActive) sessionChordCountRef.current += 1
+  }, [session.isActive])
 
   // OBS 状态推送（每秒）
   const lastChordRef = useRef('')
@@ -64,7 +87,7 @@ function App(): JSX.Element {
       lastChord: lastChordRef.current,
       streak,
       totalPracticeToday: todayMin,
-      activeSong: '',
+      activeSong: activeSongTitle,
       activeNotes: activeNotesObj,
       sustainedNotes: Array.from(midi.sustainedNotes),
       config: {
@@ -77,17 +100,20 @@ function App(): JSX.Element {
     })
 
     if (chord?.name) lastChordRef.current = chord.name
-  }, [midi.activeNotes, midi.activeNoteVelocities, midi.sustainedNotes, midi.isConnected, session.isActive, session.elapsed, dailySummary, settingsHook.settings])
+  }, [midi.activeNotes, midi.activeNoteVelocities, midi.sustainedNotes, midi.isConnected, session.isActive, session.elapsed, dailySummary, settingsHook.settings, activeSongTitle, t])
 
   const renderPage = (): JSX.Element => {
     switch (page) {
       case 'practice': return (
         <PracticePage
           midi={midi}
-          session={{ ...session, stop: stopSession }}
+          session={{ ...session, start: startSession, stop: stopSession }}
           minHoldMs={settingsHook.settings.minHoldMs}
           scaleAnalysis={scaleAnalysis}
           settings={settingsHook.settings}
+          activeSongId={activeSongId}
+          onActiveSongChange={(id, title) => { setActiveSongId(id); setActiveSongTitle(title) }}
+          onConfirmedChord={handleConfirmedChord}
         />
       )
       case 'stats':    return <StatsPage midi={midi} scaleAnalysis={scaleAnalysis} />

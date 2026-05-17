@@ -1,12 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import '../types/api'
 
+export interface SessionMetrics {
+  notePresses?: number
+  uniqueNotes?: number
+  chordsRecognized?: number
+  songId?: number | null
+}
+
 export interface UsePracticeSessionReturn {
   isActive: boolean
   elapsed: number
   startTime: Date | null
   start: () => void
-  stop: (notePresses?: number) => void
+  stop: (metrics?: SessionMetrics) => void
 }
 
 export function usePracticeSession(): UsePracticeSessionReturn {
@@ -24,7 +31,7 @@ export function usePracticeSession(): UsePracticeSessionReturn {
     setIsActive(true)
   }, [])
 
-  const stop = useCallback((notePresses = 0) => {
+  const stop = useCallback((metrics: SessionMetrics = {}) => {
     setIsActive(false)
     if (intervalRef.current) clearInterval(intervalRef.current)
 
@@ -34,25 +41,27 @@ export function usePracticeSession(): UsePracticeSessionReturn {
     const endedAt = Date.now()
     const startedAt = st.getTime()
     const durationS = Math.round((endedAt - startedAt) / 1000)
-    if (durationS < 5) return   // 少于5秒不记录
+    if (durationS < 5) return
 
-    const date = st.toISOString().slice(0, 10)  // YYYY-MM-DD
+    const date = st.toISOString().slice(0, 10)
 
     window.api?.sessions.save({
       date,
       started_at: startedAt,
       ended_at: endedAt,
       duration_s: durationS,
-      note_presses: notePresses,
-      song_id: null
+      note_presses: metrics.notePresses ?? 0,
+      unique_notes: metrics.uniqueNotes ?? 0,
+      chords_recognized: metrics.chordsRecognized ?? 0,
+      song_id: metrics.songId ?? null
     }).catch(console.error)
   }, [])
 
   useEffect(() => {
     if (isActive) {
       intervalRef.current = setInterval(() => setElapsed((p) => p + 1), 1000)
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current)
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [isActive])

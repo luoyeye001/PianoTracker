@@ -1,6 +1,6 @@
 {
   "name": "piano-tracker",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "description": "A MIDI practice tracker for pianists",
   "main": "./out/main/index.js",
   "author": "",
@@ -53,6 +53,7 @@
       "target": "portable"
     },
     "mac": {
+      "icon": "resources/icon.icns",
       "target": "dmg"
     }
   }

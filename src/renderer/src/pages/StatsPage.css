@@ -10,11 +10,46 @@
   height: 100%;
 }
 
+.stats-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .stats-title { font-size: 20px; font-weight: 600; }
+
+.stats-range-switcher {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.stats-range-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 7px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.stats-range-btn:hover:not(.stats-range-btn--active) {
+  background: rgba(255,255,255,0.05);
+}
+
+.stats-range-btn--active {
+  background: var(--accent);
+  color: #fff;
+}
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
 
