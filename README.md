@@ -10,6 +10,30 @@ A desktop practice tracker for pianists — connects to your MIDI keyboard, reco
 
 ---
 
+## Screenshots
+
+| Practice | Statistics |
+|---|---|
+| ![Practice screen with live MIDI keyboard, chord recognition, scale analysis, and session controls](docs/screenshots/practice.png) | ![Statistics screen with practice summary cards, scale analysis, and 88-key heatmap](docs/screenshots/stats.png) |
+
+| Songs | Calendar |
+|---|---|
+| ![Song management screen for tracking pieces, composers, notes, and practice status](docs/screenshots/songs.png) | ![Calendar screen with daily practice history, plans, and goal progress](docs/screenshots/calendar.png) |
+
+| OBS Overlay Settings |
+|---|
+| ![OBS settings screen for browser source URL, overlay elements, theme, position, and piano colors](docs/screenshots/obs.png) |
+
+---
+
+## Current Status
+
+PianoTracker now covers the core practice loop end to end: MIDI input, live piano visualization, chord and scale recognition, session recording, daily statistics, calendar planning, song tracking, and OBS overlay output. Recent development added richer session metrics, song-linked practice sessions, calendar practice plans, configurable OBS piano colors, and an About section in Settings.
+
+The next major direction is deeper analysis: importing MIDI reference files, comparing timing and note accuracy, separating left/right-hand parts, and exporting practice data.
+
+---
+
 ## Features
 
 ### 🎹 Real-time MIDI
@@ -22,16 +46,18 @@ A desktop practice tracker for pianists — connects to your MIDI keyboard, reco
 - Per-session and daily press count, duration, unique notes, chords recognized
 - 88-key heatmap showing which notes you play most
 - Scale analysis: detects the scale you're playing in (major, natural minor, Dorian, Pentatonic, Blues, etc.) as you go
+- Practice summaries for today, this week, and all-time history
 
 ### 📅 Calendar & Plans
 - Monthly calendar grid — see every day you practiced at a glance
-- GitHub-style annual heatmap in the Stats tab
+- Practice intensity coloring for days with recorded sessions
 - Right-click any day to add a practice plan: set a goal duration and write notes
 - Practice page shows today's plan as a banner when one exists
 
 ### 🎵 Song List
 - Track pieces you're learning with status: Not Started / Practicing / Completed
 - Add composer, notes, and update status any time
+- Link a practice session to the piece you are working on
 
 ### 📡 OBS Live Overlay
 - Local HTTP server at `http://localhost:7890/overlay` — add as a Browser Source in OBS
@@ -44,6 +70,7 @@ A desktop practice tracker for pianists — connects to your MIDI keyboard, reco
 ### ⚙️ Settings
 - Chord hold threshold: ignore brief chord changes when lifting fingers
 - Key color customization with RGBA color picker — white and black keys independently, for both pressed and sustained states
+- About section with project metadata
 
 ### 🌐 Localization
 - Chinese (Simplified) · English · 日本語
@@ -134,28 +161,24 @@ resources/
 
 ---
 
-## Roadmap
+## Development Progress
 
-### ✅ Phase 1 — Core (Complete)
-- MIDI connection & hot-plug
-- 88-key heatmap
-- Chord recognition
-- Practice calendar & annual heatmap
-- Song list
-- Multilingual UI
+### ✅ Completed
+- MIDI hot-plug detection and 88-key real-time visualization
+- Sustain pedal tracking, chord recognition, and scale analysis
+- Practice sessions with duration, keystrokes, unique notes, recognized chords, and optional linked song
+- Daily summaries, statistics cards, 88-key heatmap, monthly calendar, and practice plans
+- Song list with composer, notes, and status tracking
+- OBS browser-source overlay with SSE updates, piano display, chord/timer/streak widgets, themes, position, opacity, and independent key colors
+- Multilingual UI: Chinese, English, and Japanese
 
-### ✅ Phase 3 (Partial — OBS pulled forward)
-- OBS live overlay with real-time piano, chord, timer, streak
-
-### 🔲 Phase 2 — Analysis
-- MIDI file import & visualization
-- Error / rhythm analysis vs. reference MIDI
-- Left/right hand separation
-- Data export (CSV / JSON)
-
-### 🔲 Phase 3 — Advanced
-- Tracker Board (Famitracker-style scrolling note timeline)
-- Cloud sync via Supabase (cross-device, self-hostable)
+### 🔲 Next
+- MIDI file import and reference visualization
+- Error and rhythm analysis against reference MIDI
+- Left/right-hand separation
+- Data export as CSV / JSON
+- Tracker Board-style scrolling note timeline
+- Optional cloud sync via Supabase or another self-hostable backend
 
 ---
 
