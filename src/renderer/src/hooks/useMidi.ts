@@ -4,6 +4,9 @@ export interface MidiDevice {
   id: string
   name: string
   manufacturer: string
+  version: string
+  state: MIDIPortDeviceState
+  connection: MIDIPortConnectionState
 }
 
 export interface MidiNote {
@@ -24,12 +27,14 @@ export interface UseMidiReturn {
   lastNote: MidiNote | null
   notePressCount: Record<number, number>
   permissionState: 'idle' | 'requesting' | 'granted' | 'denied'
+  permissionError: string | null
   requestAccess: () => void
 }
 
 export function useMidi(): UseMidiReturn {
   const [isSupported] = useState(() => 'requestMIDIAccess' in navigator)
   const [permissionState, setPermissionState] = useState<UseMidiReturn['permissionState']>('idle')
+  const [permissionError, setPermissionError] = useState<string | null>(null)
   const [devices, setDevices] = useState<MidiDevice[]>([])
   const [activeDevice, setActiveDevice] = useState<MidiDevice | null>(null)
   const [activeNotes, setActiveNotes] = useState<Set<number>>(new Set())
@@ -47,7 +52,9 @@ export function useMidi(): UseMidiReturn {
   const isConnected = devices.length > 0
 
   const handleMidiMessage = useCallback((event: MIDIMessageEvent) => {
-    const [status, data1, data2] = Array.from(event.data)
+    const rawData = event.data
+    if (!rawData || rawData.length < 1) return
+    const [status, data1, data2 = 0] = Array.from(rawData)
     const command = status & 0xf0
 
     const isNoteOn  = command === 0x90 && data2 > 0
@@ -111,7 +118,10 @@ export function useMidi(): UseMidiReturn {
         found.push({
           id: input.id,
           name: input.name ?? 'Unknown Device',
-          manufacturer: input.manufacturer ?? ''
+          manufacturer: input.manufacturer ?? '',
+          version: input.version ?? '',
+          state: input.state,
+          connection: input.connection
         })
         input.onmidimessage = handleMidiMessage
       })
@@ -124,6 +134,7 @@ export function useMidi(): UseMidiReturn {
   const requestAccess = useCallback(() => {
     if (!isSupported) return
     setPermissionState('requesting')
+    setPermissionError(null)
     navigator
       .requestMIDIAccess({ sysex: false })
       .then((access) => {
@@ -132,7 +143,11 @@ export function useMidi(): UseMidiReturn {
         syncDevices(access)
         access.onstatechange = () => syncDevices(access)
       })
-      .catch(() => setPermissionState('denied'))
+      .catch((error: unknown) => {
+        setPermissionState('denied')
+        setPermissionError(error instanceof Error ? error.message : String(error))
+        console.error('[midi] requestMIDIAccess failed:', error)
+      })
   }, [isSupported, syncDevices])
 
   useEffect(() => {
@@ -156,6 +171,7 @@ export function useMidi(): UseMidiReturn {
     lastNote,
     notePressCount,
     permissionState,
+    permissionError,
     requestAccess
   }
 }

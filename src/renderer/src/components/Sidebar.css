@@ -11,15 +11,54 @@
 }
 
 .sidebar-logo {
+  position: relative;
+  display: grid;
+  place-items: center;
   font-size: 13px;
   font-weight: 700;
   color: var(--accent);
   letter-spacing: 1px;
   margin-bottom: 16px;
-  padding: 6px 10px;
+  width: 58px;
+  height: 40px;
+  padding: 0;
   border-radius: 8px;
   background: var(--bg-card);
   border: 1px solid var(--border);
+}
+
+.sidebar-logo-main,
+.sidebar-logo-toggle {
+  grid-area: 1 / 1;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.sidebar-logo-toggle {
+  opacity: 0;
+  transform: scale(0.85);
+  font-size: 22px;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+}
+
+.sidebar-logo-toggle:hover {
+  background: transparent;
+}
+
+.sidebar-logo:hover .sidebar-logo-main {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.sidebar-logo:hover .sidebar-logo-toggle {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .sidebar-item {

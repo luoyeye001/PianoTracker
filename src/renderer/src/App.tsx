@@ -26,8 +26,17 @@ function App(): JSX.Element {
   const [page, setPage] = useState<Page>('practice')
   const [activeSongId, setActiveSongId] = useState<number | null>(null)
   const [activeSongTitle, setActiveSongTitle] = useState('')
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('pianotracker_theme')
+    return saved === 'light' ? 'light' : 'dark'
+  })
   const sessionStartCountsRef = useRef<Record<number, number>>({})
   const sessionChordCountRef = useRef(0)
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('pianotracker_theme', theme)
+  }, [theme])
 
   const startSession = (): void => {
     sessionStartCountsRef.current = { ...midi.notePressCount }
@@ -126,17 +135,18 @@ function App(): JSX.Element {
 
   return (
     <div className="app">
-      <Sidebar current={page} onChange={setPage} />
+      <Sidebar current={page} onChange={setPage} theme={theme} onToggleTheme={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))} />
 
       <div className="app-body">
         <header className="app-header">
           <MidiStatus
-            isSupported={midi.isSupported}
-            isConnected={midi.isConnected}
-            devices={midi.devices}
-            permissionState={midi.permissionState}
-            onRetry={midi.requestAccess}
-          />
+          isSupported={midi.isSupported}
+          isConnected={midi.isConnected}
+          devices={midi.devices}
+          permissionState={midi.permissionState}
+          permissionError={midi.permissionError}
+          onRetry={midi.requestAccess}
+        />
           <div className="lang-switcher">
             <button onClick={() => i18n.changeLanguage('zh')}>中文</button>
             <button onClick={() => i18n.changeLanguage('en')}>English</button>

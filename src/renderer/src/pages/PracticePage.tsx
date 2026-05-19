@@ -132,7 +132,7 @@ export function PracticePage({
                 <span className="session-timer-dot" />
                 {formatElapsed(session.elapsed)}
               </span>
-              <button className="session-btn session-btn--stop" onClick={session.stop}>
+              <button className="session-btn session-btn--stop" onClick={() => session.stop()}>
                 {t('session.stop')}
               </button>
             </>

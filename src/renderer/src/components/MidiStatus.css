@@ -1,3 +1,8 @@
+.midi-status-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .midi-status {
   display: flex;
   align-items: center;
@@ -7,12 +12,25 @@
   border-radius: 20px;
   border: 1px solid var(--border);
   background: var(--bg-card);
+  color: var(--text-primary);
+  min-height: 30px;
+  max-width: 420px;
 }
 
-.midi-status button {
-  padding: 2px 8px;
-  font-size: 12px;
-  margin-left: 4px;
+.midi-status:hover {
+  background: var(--accent);
+}
+
+.midi-status-label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.midi-status-device {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
 }
 
 .midi-dot {
@@ -46,6 +64,150 @@
 .midi-status--connected {
   color: #4caf50;
   border-color: #4caf5044;
+}
+
+.midi-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 50;
+  width: min(520px, calc(100vw - 40px));
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-elevated);
+}
+
+.midi-popover-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.midi-popover-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.midi-popover-state {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.midi-popover-state--connected {
+  color: #75c878;
+}
+
+.midi-popover-state--waiting {
+  color: #f0b33f;
+}
+
+.midi-popover-state--error {
+  color: #e66b6b;
+}
+
+.midi-popover-retry {
+  flex-shrink: 0;
+  padding: 5px 10px;
+}
+
+.midi-detail-grid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  font-size: 13px;
+}
+
+.midi-detail-grid span {
+  color: var(--text-secondary);
+}
+
+.midi-detail-grid strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.midi-error-box {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e0555544;
+  border-radius: 8px;
+  background: rgba(224, 85, 85, 0.08);
+  color: #e66b6b;
+  font-size: 12px;
+}
+
+.midi-error-box code {
+  display: block;
+  margin-top: 6px;
+  color: #f0b0b0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.midi-device-list {
+  margin-top: 14px;
+}
+
+.midi-device-list-title {
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.midi-device-empty {
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.midi-device-card {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+}
+
+.midi-device-card + .midi-device-card {
+  margin-top: 8px;
+}
+
+.midi-device-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.midi-device-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.midi-device-id {
+  display: block;
+  margin-top: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 @keyframes pulse {

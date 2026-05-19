@@ -13,6 +13,19 @@
   --accent: #6c8ebf;
   --accent-hover: #7fa3d8;
   --border: #333;
+  --shadow-elevated: 0 18px 42px rgba(0, 0, 0, 0.42);
+}
+
+:root[data-theme='light'] {
+  --bg-primary: #f4f5f7;
+  --bg-secondary: #ffffff;
+  --bg-card: #e9edf3;
+  --text-primary: #1f2937;
+  --text-secondary: #5b6472;
+  --accent: #4f79b8;
+  --accent-hover: #5f8fd0;
+  --border: #d7dbe3;
+  --shadow-elevated: 0 18px 42px rgba(31, 41, 55, 0.16);
 }
 
 body {
