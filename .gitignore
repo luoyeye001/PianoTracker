@@ -20,9 +20,3 @@ npm-debug.log*
 .vscode/
 .idea/
 
-# Local env
-.env
-.env.local
-/reverse_chordie
-chordie_relevant_strings.txt
-chordie_xrefs_menu.txt
