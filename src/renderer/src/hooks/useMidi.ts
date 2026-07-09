@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+let nextMidiOwnerId = 1
+let activeMidiOwnerId = 0
+
 export interface MidiDevice {
   id: string
   name: string
@@ -20,10 +23,10 @@ export interface UseMidiReturn {
   isConnected: boolean
   devices: MidiDevice[]
   activeDevice: MidiDevice | null
-  activeNotes: Set<number>                   // 物理按住 + 踏板延音
-  activeNoteVelocities: Map<number, number>  // note → velocity
-  sustainedNotes: Set<number>                // 仅踏板延音（已松键但踏板保持）
-  sustainActive: boolean                     // 延音踏板是否踩下
+  activeNotes: Set<number>
+  activeNoteVelocities: Map<number, number>
+  sustainedNotes: Set<number>
+  sustainActive: boolean
   lastNote: MidiNote | null
   notePressCount: Record<number, number>
   permissionState: 'idle' | 'requesting' | 'granted' | 'denied'
@@ -45,40 +48,53 @@ export function useMidi(): UseMidiReturn {
   const [notePressCount, setNotePressCount] = useState<Record<number, number>>({})
 
   const midiAccessRef = useRef<MIDIAccess | null>(null)
-  // Ref 版本用于在回调中读取最新值（避免闭包陷阱）
+  const ownerIdRef = useRef(nextMidiOwnerId++)
   const sustainActiveRef = useRef(false)
   const sustainedNotesRef = useRef<Set<number>>(new Set())
+  const physicallyHeldNotesRef = useRef<Set<number>>(new Set())
 
   const isConnected = devices.length > 0
 
   const handleMidiMessage = useCallback((event: MIDIMessageEvent) => {
     const rawData = event.data
     if (!rawData || rawData.length < 1) return
+
     const [status, data1, data2 = 0] = Array.from(rawData)
     const command = status & 0xf0
-
-    const isNoteOn  = command === 0x90 && data2 > 0
+    const isNoteOn = command === 0x90 && data2 > 0
     const isNoteOff = command === 0x80 || (command === 0x90 && data2 === 0)
-    const isCC      = command === 0xb0
+    const isCC = command === 0xb0
 
     if (isNoteOn) {
       const note = data1
       const velocity = data2
-      // 如果这个音之前被踏板延着，现在重新按下，从延音集合移除
+      const wasAlreadyHeld = physicallyHeldNotesRef.current.has(note)
+
+      physicallyHeldNotesRef.current = new Set(physicallyHeldNotesRef.current).add(note)
+
       if (sustainedNotesRef.current.has(note)) {
         sustainedNotesRef.current = new Set(sustainedNotesRef.current)
         sustainedNotesRef.current.delete(note)
         setSustainedNotes(new Set(sustainedNotesRef.current))
       }
+
       setActiveNotes((prev) => new Set(prev).add(note))
       setActiveNoteVelocities((prev) => new Map(prev).set(note, velocity))
       setLastNote({ note, velocity, timestamp: event.timeStamp })
-      setNotePressCount((prev) => ({ ...prev, [note]: (prev[note] ?? 0) + 1 }))
+
+      // Count one physical key-down transition only. This prevents both React
+      // StrictMode duplicate listeners and repeated Note On messages from making
+      // a single press count as +2/+N.
+      if (!wasAlreadyHeld) {
+        setNotePressCount((prev) => ({ ...prev, [note]: (prev[note] ?? 0) + 1 }))
+      }
 
     } else if (isNoteOff) {
       const note = data1
+      physicallyHeldNotesRef.current = new Set(physicallyHeldNotesRef.current)
+      physicallyHeldNotesRef.current.delete(note)
+
       if (sustainActiveRef.current) {
-        // 踏板踩着：不从 activeNotes 移除，加入延音集合
         sustainedNotesRef.current = new Set(sustainedNotesRef.current).add(note)
         setSustainedNotes(new Set(sustainedNotesRef.current))
       } else {
@@ -87,24 +103,26 @@ export function useMidi(): UseMidiReturn {
       }
 
     } else if (isCC && data1 === 64) {
-      // 延音踏板 (CC #64)：value >= 64 为踩下
       const pedal = data2 >= 64
       sustainActiveRef.current = pedal
       setSustainActive(pedal)
 
       if (!pedal) {
-        // 踏板松开：把所有延音的键从 activeNotes 里移除
         const toRelease = sustainedNotesRef.current
         sustainedNotesRef.current = new Set()
         setSustainedNotes(new Set())
         setActiveNotes((prev) => {
           const s = new Set(prev)
-          toRelease.forEach((n) => s.delete(n))
+          toRelease.forEach((n) => {
+            if (!physicallyHeldNotesRef.current.has(n)) s.delete(n)
+          })
           return s
         })
         setActiveNoteVelocities((prev) => {
           const m = new Map(prev)
-          toRelease.forEach((n) => m.delete(n))
+          toRelease.forEach((n) => {
+            if (!physicallyHeldNotesRef.current.has(n)) m.delete(n)
+          })
           return m
         })
       }
@@ -133,17 +151,33 @@ export function useMidi(): UseMidiReturn {
 
   const requestAccess = useCallback(() => {
     if (!isSupported) return
+
+    const ownerId = ownerIdRef.current
+    activeMidiOwnerId = ownerId
     setPermissionState('requesting')
     setPermissionError(null)
+
     navigator
       .requestMIDIAccess({ sysex: false })
       .then((access) => {
+        // In React StrictMode dev builds, the first async MIDI request can
+        // resolve after its cleanup. Ignore and detach stale access objects so
+        // they cannot leave a second onmidimessage handler behind.
+        if (activeMidiOwnerId !== ownerId) {
+          access.inputs.forEach((input) => { input.onmidimessage = null })
+          access.onstatechange = null
+          return
+        }
+
         midiAccessRef.current = access
         setPermissionState('granted')
         syncDevices(access)
-        access.onstatechange = () => syncDevices(access)
+        access.onstatechange = () => {
+          if (activeMidiOwnerId === ownerId) syncDevices(access)
+        }
       })
       .catch((error: unknown) => {
+        if (activeMidiOwnerId !== ownerId) return
         setPermissionState('denied')
         setPermissionError(error instanceof Error ? error.message : String(error))
         console.error('[midi] requestMIDIAccess failed:', error)
@@ -152,8 +186,11 @@ export function useMidi(): UseMidiReturn {
 
   useEffect(() => {
     if (isSupported) requestAccess()
+    const ownerId = ownerIdRef.current
     return () => {
+      if (activeMidiOwnerId === ownerId) activeMidiOwnerId = 0
       if (midiAccessRef.current) {
+        midiAccessRef.current.onstatechange = null
         midiAccessRef.current.inputs.forEach((input) => { input.onmidimessage = null })
       }
     }
