@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePracticeHistory } from '../hooks/usePracticeHistory'
 import type { PracticePlan, DailySummary } from '../types/api'
+import { fromLocalDateString, toLocalDateString } from '../utils/date'
 import './CalendarPage.css'
 
 function toDateStr(y: number, m: number, d: number): string {
@@ -39,7 +40,7 @@ interface EditModal {
 
 
 export function CalendarPage(): JSX.Element {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { dailySummary } = usePracticeHistory()
 
   const today = new Date()
@@ -82,7 +83,8 @@ export function CalendarPage(): JSX.Element {
 
   const handleSave = async (): Promise<void> => {
     if (!editModal) return
-    const goal = parseInt(editGoal) || 0
+    const parsedGoal = Number.parseInt(editGoal, 10)
+    const goal = Number.isFinite(parsedGoal) ? Math.min(300, Math.max(0, parsedGoal)) : 0
     if (goal === 0 && editNote.trim() === '') {
       await window.api?.plans.delete(editModal.dateStr)
     } else {
@@ -99,7 +101,7 @@ export function CalendarPage(): JSX.Element {
   }
 
   const buildGrid = (): DayInfo[] => {
-    const todayStr = today.toISOString().slice(0, 10)
+    const todayStr = toLocalDateString(today)
     const daysInMonth = getDaysInMonth(viewYear, viewMonth)
     const firstDow = getFirstDayOfWeek(viewYear, viewMonth)
     const cells: DayInfo[] = []
@@ -137,11 +139,14 @@ export function CalendarPage(): JSX.Element {
 
   const grid = buildGrid()
 
-  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(undefined, {
+  const locale = i18n.resolvedLanguage || i18n.language
+  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(locale, {
     year: 'numeric', month: 'long'
   })
 
-  const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
+  const weekdays = Array.from({ length: 7 }, (_, index) =>
+    new Date(2024, 0, 7 + index).toLocaleDateString(locale, { weekday: 'short' })
+  )
 
   const practiceClass = (min: number): string => {
     if (min === 0) return ''
@@ -170,7 +175,7 @@ export function CalendarPage(): JSX.Element {
   }
 
   const formatDate = (ds: string): string =>
-    new Date(ds + 'T00:00:00').toLocaleDateString(undefined, {
+    fromLocalDateString(ds).toLocaleDateString(locale, {
       month: 'long', day: 'numeric', weekday: 'short'
     })
 
@@ -195,7 +200,7 @@ export function CalendarPage(): JSX.Element {
 
       {/* 星期头 */}
       <div className="cal-weekdays">
-        {WEEKDAYS.map((d) => <div key={d} className="cal-weekday">{d}</div>)}
+        {weekdays.map((day, index) => <div key={index} className="cal-weekday">{day}</div>)}
       </div>
 
       {/* 月历格子 */}

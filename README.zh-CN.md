@@ -81,7 +81,7 @@ PianoTracker 已经覆盖完整的基础练习流程：MIDI 输入、实时钢�
 
 | 层次 | 技术 |
 |------|------|
-| 桌面框架 | Electron 31 |
+| 桌面框架 | Electron 39 |
 | 界面 | React 18 + TypeScript |
 | 构建 | electron-vite + Vite |
 | 数据库 | better-sqlite3（离线优先） |
@@ -96,7 +96,7 @@ PianoTracker 已经覆盖完整的基础练习流程：MIDI 输入、实时钢�
 
 ### 前置条件
 
-- [Node.js](https://nodejs.org/) 18 及以上
+- [Node.js](https://nodejs.org/) 20.19+ 或 22.12+
 - USB MIDI 键盘（开发与测试使用 Roland FP-30）
 
 ### 安装 & 运行
@@ -121,6 +121,10 @@ npm run pack:mac
 ```
 
 输出文件位于 `dist/` 目录。
+
+macOS 命令会分别生成 Intel (`x64`) 和 Apple Silicon (`arm64`) 的未签名 DMG，不需要 Apple Developer 账号。由于没有 Apple 公证，其他用户首次打开时可能需要右键 **PianoTracker.app** 选择**打开**，或在**系统设置 → 隐私与安全性**中允许打开。
+
+练琴数据会自动保存在每位用户可写的应用数据目录，而不是 App 同级目录。macOS 数据库路径为 `~/Library/Application Support/piano-tracker/pianotracker.db`；替换或重新安装 App 不会删除该数据库。
 
 ---
 

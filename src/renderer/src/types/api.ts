@@ -39,6 +39,9 @@ export interface PracticePlan {
 declare global {
   interface Window {
     api: {
+      app: {
+        getVersion: () => Promise<string>
+      }
       sessions: {
         save: (s: Omit<PracticeSession, 'id'>) => Promise<number>
         list: () => Promise<PracticeSession[]>

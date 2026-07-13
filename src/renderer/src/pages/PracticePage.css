@@ -7,12 +7,14 @@
 
 .practice-body {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: safe center;
   gap: 32px;
   padding: 24px 32px 16px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* 今日计划横幅 */
@@ -165,23 +167,46 @@
   display: flex;
   align-items: flex-start;
   gap: 40px;
+  min-width: 0;
 }
 
 .chord-current {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
 .chord-name-large {
-  font-size: 80px;
+  font-size: clamp(40px, 6vw, 80px);
   font-weight: 800;
   line-height: 1;
   color: var(--text-secondary);
   letter-spacing: -2px;
   transition: color 0.15s;
+  overflow-wrap: anywhere;
 }
 .chord-current--active .chord-name-large { color: var(--accent); }
+
+.chord-alternates {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+  max-height: 112px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.chord-alternate {
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
 
 .chord-quality {
   font-size: 14px;
@@ -238,12 +263,15 @@
 .chord-last .section-label { justify-content: flex-end; }
 
 .chord-name-medium {
-  font-size: 40px;
+  max-width: 240px;
+  font-size: clamp(24px, 3vw, 40px);
   font-weight: 700;
   color: var(--text-secondary);
   line-height: 1;
   letter-spacing: -1px;
   opacity: 0.5;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 .chord-name--empty { opacity: 0.2; font-weight: 300; }
 

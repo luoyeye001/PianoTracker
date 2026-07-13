@@ -16,20 +16,18 @@ export function useScaleAnalysis(midi: UseMidiReturn): UseScaleAnalysisReturn {
   useEffect(() => {
     const prev = prevNotePressCount.current
     const curr = midi.notePressCount
-    let changed = false
-    const next = new Set(recentPCs)
+    const newlyPlayed = new Set<number>()
 
     for (const key of Object.keys(curr)) {
       const note = Number(key)
       if ((curr[note] ?? 0) > (prev[note] ?? 0)) {
-        next.add(note % 12)
-        changed = true
+        newlyPlayed.add(note % 12)
       }
     }
 
-    if (changed) {
-      prevNotePressCount.current = { ...curr }
-      setRecentPCs(new Set(next))
+    prevNotePressCount.current = { ...curr }
+    if (newlyPlayed.size > 0) {
+      setRecentPCs((current) => new Set([...current, ...newlyPlayed]))
     }
   }, [midi.notePressCount])
 
@@ -39,7 +37,7 @@ export function useScaleAnalysis(midi: UseMidiReturn): UseScaleAnalysisReturn {
 
   const reset = (): void => {
     setRecentPCs(new Set())
-    prevNotePressCount.current = {}
+    prevNotePressCount.current = { ...midi.notePressCount }
   }
 
   return { recentPitchClasses, scaleMatches, reset }

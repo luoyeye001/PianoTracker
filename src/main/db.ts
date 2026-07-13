@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import { app } from 'electron'
 import { join } from 'path'
 
-let db: Database.Database
+let db: Database.Database | null = null
 
 export function getDb(): Database.Database {
   if (db) return db
@@ -18,6 +18,16 @@ export function getDb(): Database.Database {
 
 function initSchema(db: Database.Database): void {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS songs (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      title       TEXT NOT NULL,
+      composer    TEXT DEFAULT '',
+      status      TEXT DEFAULT 'not_started',  -- not_started | practicing | completed
+      notes       TEXT DEFAULT '',
+      created_at  INTEGER NOT NULL,
+      updated_at  INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS practice_sessions (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       date        TEXT NOT NULL,          -- YYYY-MM-DD
@@ -28,16 +38,6 @@ function initSchema(db: Database.Database): void {
       unique_notes INTEGER DEFAULT 0,      -- 使用过的音符数
       chords_recognized INTEGER DEFAULT 0, -- 确认识别的和弦数
       song_id     INTEGER REFERENCES songs(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS songs (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      title       TEXT NOT NULL,
-      composer    TEXT DEFAULT '',
-      status      TEXT DEFAULT 'not_started',  -- not_started | practicing | completed
-      notes       TEXT DEFAULT '',
-      created_at  INTEGER NOT NULL,
-      updated_at  INTEGER NOT NULL
     );
 
     CREATE INDEX IF NOT EXISTS idx_sessions_date ON practice_sessions(date);
@@ -60,4 +60,10 @@ function initSchema(db: Database.Database): void {
   if (!existing.has('chords_recognized')) {
     db.exec('ALTER TABLE practice_sessions ADD COLUMN chords_recognized INTEGER DEFAULT 0')
   }
+}
+
+export function closeDb(): void {
+  if (!db) return
+  db.close()
+  db = null
 }

@@ -142,7 +142,9 @@
         <div class="chord-quality" id="chord-quality"></div>
       </div>
 
-      <div class="last-chord hidden" id="last-chord-row"></div>
+      <div class="last-chord hidden" id="last-chord-row">
+        上一个：<span id="last-chord-value"></span>
+      </div>
 
       <div class="stats-row" id="stats-row">
         <div id="today-cell">今日 <span id="today-min">0</span>m</div>
@@ -339,7 +341,7 @@
       const lastRow = document.getElementById('last-chord-row')
       const showLast = c.showLastChord!==false && !!s.lastChord
       lastRow.classList.toggle('hidden', !showLast)
-      if (showLast) lastRow.innerHTML = `上一个：<span>${s.lastChord}</span>`
+      document.getElementById('last-chord-value').textContent = showLast ? s.lastChord : ''
 
       // 统计行
       const hasStats = c.showTodayMin!==false || c.showStreak!==false

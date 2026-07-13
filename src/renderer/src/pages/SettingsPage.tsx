@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { RgbaColorPicker } from 'react-colorful'
 import type { RgbaColor } from 'react-colorful'
 import type { UseSettingsReturn, Settings } from '../hooks/useSettings'
+import { CHORDIE_KEY_CENTERS, type ChordieKeyCenter } from '../utils/chordRecognition'
 import './SettingsPage.css'
 
 interface Props {
@@ -78,6 +79,23 @@ function ColorSwatch({
 
 export function SettingsPage({ settings: { settings, update, reset } }: Props): JSX.Element {
   const { t } = useTranslation()
+  const [appVersion, setAppVersion] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+
+    window.api.app.getVersion()
+      .then((version) => {
+        if (!cancelled) setAppVersion(version)
+      })
+      .catch((error) => {
+        console.error('Failed to get app version:', error)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="settings-page">
@@ -104,6 +122,26 @@ export function SettingsPage({ settings: { settings, update, reset } }: Props): 
               className="settings-slider"
             />
             <span className="settings-value">{settings.minHoldMs} ms</span>
+          </div>
+        </div>
+
+        <div className="settings-row">
+          <div className="settings-info">
+            <div className="settings-label">{t('settingsView.keyCenterLabel')}</div>
+            <div className="settings-desc">{t('settingsView.keyCenterDesc')}</div>
+          </div>
+          <div className="settings-control">
+            <select
+              className="settings-select"
+              value={settings.chordKeyCenter}
+              onChange={(e) => update('chordKeyCenter', Number(e.target.value) as ChordieKeyCenter)}
+            >
+              {CHORDIE_KEY_CENTERS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.value === 0 ? t('settingsView.noKey') : option.label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -161,7 +199,7 @@ export function SettingsPage({ settings: { settings, update, reset } }: Props): 
         <div className="settings-section-title">{t('settingsView.aboutSection')}</div>
         <div className="about-row">
           <span className="about-app-name">PianoTracker</span>
-          <span className="about-version">v0.1.0</span>
+          <span className="about-version">{appVersion ? `v${appVersion}` : '—'}</span>
         </div>
         <div className="about-row">
           <span className="about-label">{t('settingsView.aboutAuthor')}</span>

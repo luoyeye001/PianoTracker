@@ -6,6 +6,7 @@ import { usePracticeHistory } from '../hooks/usePracticeHistory'
 import type { UseMidiReturn } from '../hooks/useMidi'
 import type { UseScaleAnalysisReturn } from '../hooks/useScaleAnalysis'
 import type { DailySummary } from '../types/api'
+import { toLocalDateString } from '../utils/date'
 import './StatsPage.css'
 
 interface Props {
@@ -14,10 +15,6 @@ interface Props {
 }
 
 type StatsRange = 'today' | 'week' | 'total'
-
-function toDateStr(d: Date): string {
-  return d.toISOString().slice(0, 10)
-}
 
 function startOfWeek(d: Date): Date {
   const next = new Date(d)
@@ -49,8 +46,8 @@ export function StatsPage({ midi, scaleAnalysis }: Props): JSX.Element {
 
   const summary = useMemo(() => {
     const now = new Date()
-    const today = toDateStr(now)
-    const weekStart = toDateStr(startOfWeek(now))
+    const today = toLocalDateString(now)
+    const weekStart = toLocalDateString(startOfWeek(now))
 
     const entries = range === 'today'
       ? dailySummary.filter((d) => d.date === today)

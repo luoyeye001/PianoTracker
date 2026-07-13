@@ -1,8 +1,9 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerIpcHandlers } from './ipcHandlers'
 import { startObsServer, stopObsServer } from './obsServer'
+import { closeDb } from './db'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -23,7 +24,12 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    try {
+      const url = new URL(details.url)
+      if (['http:', 'https:', 'mailto:'].includes(url.protocol)) {
+        void shell.openExternal(details.url)
+      }
+    } catch {}
     return { action: 'deny' }
   })
 
@@ -36,6 +42,7 @@ function createWindow(): void {
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.pianotracker')
+  ipcMain.handle('app:getVersion', () => app.getVersion())
   try {
     registerIpcHandlers()
   } catch (e) {
@@ -55,8 +62,12 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
-  stopObsServer()
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+app.on('before-quit', () => {
+  stopObsServer()
+  closeDb()
 })

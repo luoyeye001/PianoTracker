@@ -2,7 +2,7 @@ import express from 'express'
 import { join } from 'path'
 import { app as electronApp } from 'electron'
 import { is } from '@electron-toolkit/utils'
-import { Server } from 'http'
+import type { Server } from 'http'
 import type { Response } from 'express'
 
 export interface ObsState {
@@ -105,12 +105,19 @@ export function startObsServer(port = 7890): void {
 
   app.get('/', (_req, res) => res.redirect('/overlay'))
 
-  httpServer = app.listen(port, '127.0.0.1', () => {
+  const server = app.listen(port, '127.0.0.1', () => {
     console.log(`[OBS] http://localhost:${port}/overlay`)
   })
+  server.on('error', (error) => {
+    console.error(`[OBS] failed to listen on port ${port}:`, error)
+    if (httpServer === server) httpServer = null
+  })
+  httpServer = server
 }
 
 export function stopObsServer(): void {
+  for (const client of sseClients) client.end()
+  sseClients.clear()
   httpServer?.close()
   httpServer = null
 }

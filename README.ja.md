@@ -54,7 +54,7 @@
 
 | レイヤー | 技術 |
 |---------|------|
-| デスクトップ | Electron 31 |
+| デスクトップ | Electron 39 |
 | UI | React 18 + TypeScript |
 | ビルド | electron-vite + Vite |
 | データベース | better-sqlite3（オフラインファースト） |
@@ -69,7 +69,7 @@
 
 ### 動作要件
 
-- [Node.js](https://nodejs.org/) 18 以上
+- [Node.js](https://nodejs.org/) 20.19+ または 22.12+
 - USB MIDI キーボード（Roland FP-30 で開発・テスト済み）
 
 ### インストール & 起動
@@ -94,6 +94,10 @@ npm run pack:mac
 ```
 
 出力ファイルは `dist/` フォルダに生成されます。
+
+macOS コマンドは Intel (`x64`) と Apple Silicon (`arm64`) 用の未署名 DMG を個別に生成するため、Apple Developer アカウントは不要です。公証されていないため、初回起動時は **PianoTracker.app** を右クリックして**開く**を選ぶか、**システム設定 → プライバシーとセキュリティ**で起動を許可してください。
+
+練習データは App と同じ場所ではなく、各ユーザーが書き込めるアプリケーションデータ領域に自動作成されます。macOS のデータベースは `~/Library/Application Support/piano-tracker/pianotracker.db` にあり、App の置き換えや再インストールでは削除されません。
 
 ---
 

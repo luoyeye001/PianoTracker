@@ -81,7 +81,7 @@ The next major direction is deeper analysis: importing MIDI reference files, com
 
 | Layer | Technology |
 |-------|------------|
-| Desktop | Electron 31 |
+| Desktop | Electron 39 |
 | UI | React 18 + TypeScript |
 | Build | electron-vite + Vite |
 | Database | better-sqlite3 (offline-first) |
@@ -96,7 +96,7 @@ The next major direction is deeper analysis: importing MIDI reference files, com
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 18 or later
+- [Node.js](https://nodejs.org/) 20.19+ or 22.12+
 - A USB MIDI keyboard (developed and tested with Roland FP-30)
 
 ### Install & Run
@@ -121,6 +121,10 @@ npm run pack:mac
 ```
 
 Output is placed in the `dist/` folder.
+
+The macOS command creates separate `x64` and `arm64` DMGs without requiring an Apple Developer account. Because they are unsigned, first-time users may need to right-click **PianoTracker.app** and choose **Open**, or approve it under **System Settings → Privacy & Security**.
+
+Practice data is created automatically in each user's writable application-data directory, not beside the app. On macOS the database is `~/Library/Application Support/piano-tracker/pianotracker.db`; uninstalling or replacing the app does not remove it.
 
 ---
 

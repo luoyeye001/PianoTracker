@@ -1,16 +1,13 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { DailySummary } from '../types/api'
+import { addLocalDays, fromLocalDateString, toLocalDateString } from '../utils/date'
 import './PracticeHeatmap.css'
 
 interface Props {
   dailySummary: DailySummary[]
   onSelectDate?: (date: string) => void
   selectedDate?: string
-}
-
-function toDateStr(d: Date): string {
-  return d.toISOString().slice(0, 10)
 }
 
 function addDays(d: Date, n: number): Date {
@@ -28,7 +25,8 @@ function minutesToLevel(minutes: number): 0 | 1 | 2 | 3 | 4 {
 }
 
 export function PracticeHeatmap({ dailySummary, onSelectDate, selectedDate }: Props): JSX.Element {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.resolvedLanguage || i18n.language
 
   const { weeks, months } = useMemo(() => {
     const summaryMap = new Map(dailySummary.map((d) => [d.date, d]))
@@ -44,7 +42,7 @@ export function PracticeHeatmap({ dailySummary, onSelectDate, selectedDate }: Pr
     while (current <= today) {
       const week: typeof weeks[0] = []
       for (let d = 0; d < 7; d++) {
-        const dateStr = toDateStr(current)
+        const dateStr = toLocalDateString(current)
         const summary = summaryMap.get(dateStr)
         const minutes = summary ? Math.round(summary.total_s / 60) : 0
         const isFuture = current > today
@@ -61,10 +59,11 @@ export function PracticeHeatmap({ dailySummary, onSelectDate, selectedDate }: Pr
     const months: { label: string; col: number }[] = []
     let lastMonth = -1
     weeks.forEach((week, col) => {
-      const month = new Date(week[0].date).getMonth()
+      const firstDate = fromLocalDateString(week[0].date)
+      const month = firstDate.getMonth()
       if (month !== lastMonth) {
         months.push({
-          label: new Date(week[0].date).toLocaleDateString(undefined, { month: 'short' }),
+          label: firstDate.toLocaleDateString(locale, { month: 'short' }),
           col
         })
         lastMonth = month
@@ -72,25 +71,27 @@ export function PracticeHeatmap({ dailySummary, onSelectDate, selectedDate }: Pr
     })
 
     return { weeks, months }
-  }, [dailySummary])
+  }, [dailySummary, locale])
 
   const totalDays = dailySummary.length
   const streak = useMemo(() => {
     if (dailySummary.length === 0) return 0
     const sorted = [...dailySummary].sort((a, b) => b.date.localeCompare(a.date))
-    const today = toDateStr(new Date())
+    const today = toLocalDateString()
     let count = 0
     let expected = today
     for (const d of sorted) {
       if (d.date === expected) {
         count++
-        expected = toDateStr(addDays(new Date(expected), -1))
+        expected = addLocalDays(expected, -1)
       } else break
     }
     return count
   }, [dailySummary])
 
-  const DAYS = ['日', '一', '二', '三', '四', '五', '六']
+  const days = Array.from({ length: 7 }, (_, index) =>
+    new Date(2024, 0, 7 + index).toLocaleDateString(locale, { weekday: 'short' })
+  )
 
   return (
     <div className="practice-heatmap">
@@ -114,8 +115,8 @@ export function PracticeHeatmap({ dailySummary, onSelectDate, selectedDate }: Pr
         <div className="heatmap-body">
           {/* 星期标签 */}
           <div className="heatmap-days">
-            {DAYS.map((d, i) => (
-              <div key={i} className="heatmap-day-label">{i % 2 === 1 ? d : ''}</div>
+            {days.map((day, index) => (
+              <div key={index} className="heatmap-day-label">{index % 2 === 1 ? day : ''}</div>
             ))}
           </div>
 

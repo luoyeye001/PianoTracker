@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import type { ChordieKeyCenter } from '../utils/chordRecognition'
 
 export interface ObsConfig {
   showChord: boolean
@@ -21,6 +22,7 @@ export interface ObsConfig {
 
 export interface Settings {
   minHoldMs: number
+  chordKeyCenter: ChordieKeyCenter
   whiteKeyPressedColor: string
   blackKeyPressedColor: string
   whiteKeySustainedColor: string
@@ -30,6 +32,7 @@ export interface Settings {
 
 const DEFAULTS: Settings = {
   minHoldMs: 300,
+  chordKeyCenter: 0,
   whiteKeyPressedColor:   'rgba(66, 153, 225, 1)',
   blackKeyPressedColor:   'rgba(49, 103, 170, 1)',
   whiteKeySustainedColor: 'rgba(100, 160, 230, 0.55)',
@@ -55,23 +58,45 @@ const DEFAULTS: Settings = {
 
 const STORAGE_KEY = 'pianotracker_settings'
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function normalizeKeyCenter(value: unknown): ChordieKeyCenter {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 15
+    ? value as ChordieKeyCenter
+    : DEFAULTS.chordKeyCenter
+}
+
+function normalizeMinHoldMs(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.min(1000, Math.max(50, Math.round(value)))
+    : DEFAULTS.minHoldMs
+}
+
 function load(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
-      const parsed = JSON.parse(raw)
+      const parsed: unknown = JSON.parse(raw)
+      if (!isRecord(parsed)) return { ...DEFAULTS, obs: { ...DEFAULTS.obs } }
+      const parsedObs = isRecord(parsed.obs) ? parsed.obs : {}
       return {
         ...DEFAULTS,
         ...parsed,
-        obs: { ...DEFAULTS.obs, ...(parsed.obs || {}) }
+        minHoldMs: normalizeMinHoldMs(parsed.minHoldMs),
+        chordKeyCenter: normalizeKeyCenter(parsed.chordKeyCenter),
+        obs: { ...DEFAULTS.obs, ...parsedObs }
       }
     }
   } catch {}
-  return { ...DEFAULTS }
+  return { ...DEFAULTS, obs: { ...DEFAULTS.obs } }
 }
 
 function save(s: Settings): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
+  } catch {}
 }
 
 export interface UseSettingsReturn {
@@ -102,7 +127,7 @@ export function useSettings(): UseSettingsReturn {
 
   const reset = useCallback(() => {
     save(DEFAULTS)
-    setSettings({ ...DEFAULTS })
+    setSettings({ ...DEFAULTS, obs: { ...DEFAULTS.obs } })
   }, [])
 
   return { settings, update, updateObs, reset }

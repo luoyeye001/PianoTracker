@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import '../types/api'
+import { toLocalDateString } from '../utils/date'
 
 export interface SessionMetrics {
   notePresses?: number
@@ -16,15 +17,23 @@ export interface UsePracticeSessionReturn {
   stop: (metrics?: SessionMetrics) => void
 }
 
-export function usePracticeSession(): UsePracticeSessionReturn {
+export function usePracticeSession(onSaved?: () => void): UsePracticeSessionReturn {
   const [isActive, setIsActive] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [startTime, setStartTime] = useState<Date | null>(null)
   const startTimeRef = useRef<Date | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isActiveRef = useRef(false)
+  const onSavedRef = useRef(onSaved)
+
+  useEffect(() => {
+    onSavedRef.current = onSaved
+  }, [onSaved])
 
   const start = useCallback(() => {
+    if (isActiveRef.current) return
     const now = new Date()
+    isActiveRef.current = true
     startTimeRef.current = now
     setStartTime(now)
     setElapsed(0)
@@ -32,10 +41,17 @@ export function usePracticeSession(): UsePracticeSessionReturn {
   }, [])
 
   const stop = useCallback((metrics: SessionMetrics = {}) => {
+    if (!isActiveRef.current) return
+    isActiveRef.current = false
     setIsActive(false)
-    if (intervalRef.current) clearInterval(intervalRef.current)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
 
     const st = startTimeRef.current
+    startTimeRef.current = null
+    setStartTime(null)
     if (!st) return
 
     const endedAt = Date.now()
@@ -43,9 +59,9 @@ export function usePracticeSession(): UsePracticeSessionReturn {
     const durationS = Math.round((endedAt - startedAt) / 1000)
     if (durationS < 5) return
 
-    const date = st.toISOString().slice(0, 10)
+    const date = toLocalDateString(st)
 
-    window.api?.sessions.save({
+    const saveRequest = window.api?.sessions.save({
       date,
       started_at: startedAt,
       ended_at: endedAt,
@@ -54,7 +70,8 @@ export function usePracticeSession(): UsePracticeSessionReturn {
       unique_notes: metrics.uniqueNotes ?? 0,
       chords_recognized: metrics.chordsRecognized ?? 0,
       song_id: metrics.songId ?? null
-    }).catch(console.error)
+    })
+    saveRequest?.then(() => onSavedRef.current?.()).catch(console.error)
   }, [])
 
   useEffect(() => {
@@ -63,7 +80,12 @@ export function usePracticeSession(): UsePracticeSessionReturn {
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current)
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
   }, [isActive])
 
   return { isActive, elapsed, startTime, start, stop }

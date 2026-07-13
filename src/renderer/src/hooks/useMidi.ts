@@ -3,6 +3,13 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 let nextMidiOwnerId = 1
 let activeMidiOwnerId = 0
 
+const CHORDIE_LOWEST_MIDI_NOTE = 21
+const CHORDIE_HIGHEST_MIDI_NOTE = 108
+
+function isChordiePianoNote(note: number): boolean {
+  return note >= CHORDIE_LOWEST_MIDI_NOTE && note <= CHORDIE_HIGHEST_MIDI_NOTE
+}
+
 export interface MidiDevice {
   id: string
   name: string
@@ -55,6 +62,17 @@ export function useMidi(): UseMidiReturn {
 
   const isConnected = devices.length > 0
 
+  const resetActiveState = useCallback(() => {
+    sustainActiveRef.current = false
+    sustainedNotesRef.current = new Set()
+    physicallyHeldNotesRef.current = new Set()
+    setActiveNotes(new Set())
+    setActiveNoteVelocities(new Map())
+    setSustainedNotes(new Set())
+    setSustainActive(false)
+    setLastNote(null)
+  }, [])
+
   const handleMidiMessage = useCallback((event: MIDIMessageEvent) => {
     const rawData = event.data
     if (!rawData || rawData.length < 1) return
@@ -65,20 +83,39 @@ export function useMidi(): UseMidiReturn {
     const isNoteOff = command === 0x80 || (command === 0x90 && data2 === 0)
     const isCC = command === 0xb0
 
+    const syncActiveNotes = (): Set<number> => {
+      const next = new Set(physicallyHeldNotesRef.current)
+      sustainedNotesRef.current.forEach((note) => next.add(note))
+      setActiveNotes(next)
+      setActiveNoteVelocities((prev) => {
+        const velocities = new Map(prev)
+        velocities.forEach((_velocity, note) => {
+          if (!next.has(note)) velocities.delete(note)
+        })
+        return velocities
+      })
+      return next
+    }
+
     if (isNoteOn) {
       const note = data1
+      if (!isChordiePianoNote(note)) return
       const velocity = data2
       const wasAlreadyHeld = physicallyHeldNotesRef.current.has(note)
 
       physicallyHeldNotesRef.current = new Set(physicallyHeldNotesRef.current).add(note)
 
-      if (sustainedNotesRef.current.has(note)) {
-        sustainedNotesRef.current = new Set(sustainedNotesRef.current)
-        sustainedNotesRef.current.delete(note)
+      // Detector::noteOn calls sustainOn while the pedal is down. sustainOn
+      // snapshots every physically held key, including the new note.
+      if (sustainActiveRef.current) {
+        sustainedNotesRef.current = new Set([
+          ...sustainedNotesRef.current,
+          ...physicallyHeldNotesRef.current
+        ])
         setSustainedNotes(new Set(sustainedNotesRef.current))
       }
 
-      setActiveNotes((prev) => new Set(prev).add(note))
+      syncActiveNotes()
       setActiveNoteVelocities((prev) => new Map(prev).set(note, velocity))
       setLastNote({ note, velocity, timestamp: event.timeStamp })
 
@@ -91,41 +128,30 @@ export function useMidi(): UseMidiReturn {
 
     } else if (isNoteOff) {
       const note = data1
+      if (!isChordiePianoNote(note)) return
       physicallyHeldNotesRef.current = new Set(physicallyHeldNotesRef.current)
       physicallyHeldNotesRef.current.delete(note)
 
-      if (sustainActiveRef.current) {
-        sustainedNotesRef.current = new Set(sustainedNotesRef.current).add(note)
-        setSustainedNotes(new Set(sustainedNotesRef.current))
-      } else {
-        setActiveNotes((prev) => { const s = new Set(prev); s.delete(note); return s })
-        setActiveNoteVelocities((prev) => { const m = new Map(prev); m.delete(note); return m })
-      }
+      // Chordie clears only the physical state. The sustained snapshot, when
+      // present, continues to contribute to the active-note union.
+      syncActiveNotes()
 
     } else if (isCC && data1 === 64) {
       const pedal = data2 >= 64
       sustainActiveRef.current = pedal
       setSustainActive(pedal)
 
-      if (!pedal) {
-        const toRelease = sustainedNotesRef.current
+      if (pedal) {
+        sustainedNotesRef.current = new Set([
+          ...sustainedNotesRef.current,
+          ...physicallyHeldNotesRef.current
+        ])
+        setSustainedNotes(new Set(sustainedNotesRef.current))
+      } else {
         sustainedNotesRef.current = new Set()
         setSustainedNotes(new Set())
-        setActiveNotes((prev) => {
-          const s = new Set(prev)
-          toRelease.forEach((n) => {
-            if (!physicallyHeldNotesRef.current.has(n)) s.delete(n)
-          })
-          return s
-        })
-        setActiveNoteVelocities((prev) => {
-          const m = new Map(prev)
-          toRelease.forEach((n) => {
-            if (!physicallyHeldNotesRef.current.has(n)) m.delete(n)
-          })
-          return m
-        })
       }
+      syncActiveNotes()
     }
   }, [])
 
@@ -133,6 +159,10 @@ export function useMidi(): UseMidiReturn {
     (access: MIDIAccess) => {
       const found: MidiDevice[] = []
       access.inputs.forEach((input) => {
+        const connected = input.state === 'connected'
+        input.onmidimessage = connected ? handleMidiMessage : null
+        if (!connected) return
+
         found.push({
           id: input.id,
           name: input.name ?? 'Unknown Device',
@@ -141,12 +171,12 @@ export function useMidi(): UseMidiReturn {
           state: input.state,
           connection: input.connection
         })
-        input.onmidimessage = handleMidiMessage
       })
       setDevices(found)
       setActiveDevice(found.length > 0 ? found[0] : null)
+      if (found.length === 0) resetActiveState()
     },
-    [handleMidiMessage]
+    [handleMidiMessage, resetActiveState]
   )
 
   const requestAccess = useCallback(() => {

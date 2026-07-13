@@ -7,15 +7,19 @@
   "license": "MIT",
   "repository": "https://github.com/luoyeye001/PianoTracker",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "pack:win": "npm run build && electron-builder --win",
-    "pack:mac": "npm run build && electron-builder --mac"
+    "typecheck": "tsc -p tsconfig.node.json --pretty false && tsc -p tsconfig.web.json --pretty false",
+    "test:chords": "node scripts/verifyChordieParity.cjs",
+    "check": "npm run typecheck && npm run test:chords && npm run build",
+    "pack:win": "npm run build && electron-builder --win --x64 && npm run postinstall",
+    "pack:mac": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --x64 --arm64 && npm run postinstall"
   },
   "dependencies": {
     "@theme-toggles/react": "^3.6.2",
-    "better-sqlite3": "^12.10.0",
+    "better-sqlite3": "^12.11.1",
     "express": "^5.2.1",
     "i18next": "^23.10.0",
     "react": "^18.3.1",
@@ -30,12 +34,12 @@
     "@types/express": "^5.0.6",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "electron": "^31.0.0",
-    "electron-builder": "^24.13.3",
-    "electron-vite": "^2.3.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^39.8.10",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
     "typescript": "^5.5.2",
-    "vite": "^5.3.1"
+    "vite": "^7.3.6"
   },
   "build": {
     "appId": "com.pianotracker.app",
@@ -56,6 +60,8 @@
     "mac": {
       "icon": "resources/icon.icns",
       "target": "dmg",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "category": "public.app-category.music",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "resources/entitlements.mac.plist",

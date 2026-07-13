@@ -29,11 +29,15 @@ export function registerIpcHandlers(): void {
 
   // ── Sessions ──────────────────────────────────────────
   ipcMain.handle('sessions:save', (_, session: Omit<PracticeSession, 'id'>) => {
+    const requestedSongId = Number.isInteger(session.song_id) ? session.song_id : null
+    const songId = requestedSongId !== null && db.prepare('SELECT 1 FROM songs WHERE id = ?').get(requestedSongId)
+      ? requestedSongId
+      : null
     const stmt = db.prepare(`
       INSERT INTO practice_sessions (date, started_at, ended_at, duration_s, note_presses, unique_notes, chords_recognized, song_id)
       VALUES (@date, @started_at, @ended_at, @duration_s, @note_presses, @unique_notes, @chords_recognized, @song_id)
     `)
-    const result = stmt.run(session)
+    const result = stmt.run({ ...session, song_id: songId })
     return result.lastInsertRowid
   })
 
@@ -87,7 +91,11 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('songs:delete', (_, id: number) => {
-    db.prepare('DELETE FROM songs WHERE id = ?').run(id)
+    const removeSong = db.transaction(() => {
+      db.prepare('UPDATE practice_sessions SET song_id = NULL WHERE song_id = ?').run(id)
+      db.prepare('DELETE FROM songs WHERE id = ?').run(id)
+    })
+    removeSong()
   })
 
   // ── Practice Plans ─────────────────────────────────────

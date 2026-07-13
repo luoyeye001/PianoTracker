@@ -14,15 +14,16 @@ import { CalendarPage } from './pages/CalendarPage'
 import { OBSPage } from './pages/OBSPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { recognizeChord } from './utils/chordRecognition'
+import { addLocalDays, toLocalDateString } from './utils/date'
 import './styles/App.css'
 
 function App(): JSX.Element {
   const { t, i18n } = useTranslation()
   const midi = useMidi()
-  const session = usePracticeSession()
   const settingsHook = useSettings()
   const scaleAnalysis = useScaleAnalysis(midi)
-  const { dailySummary } = usePracticeHistory()
+  const { dailySummary, reload: reloadPracticeHistory } = usePracticeHistory()
+  const session = usePracticeSession(reloadPracticeHistory)
   const [page, setPage] = useState<Page>('practice')
   const [activeSongId, setActiveSongId] = useState<number | null>(null)
   const [activeSongTitle, setActiveSongTitle] = useState('')
@@ -61,12 +62,21 @@ function App(): JSX.Element {
     if (session.isActive) sessionChordCountRef.current += 1
   }, [session.isActive])
 
+  const handleActiveSongChange = useCallback((id: number | null, title: string): void => {
+    setActiveSongId(id)
+    setActiveSongTitle(title)
+  }, [])
+
   // OBS 状态推送（每秒）
+  const currentObsChordRef = useRef('')
   const lastChordRef = useRef('')
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = toLocalDateString()
     const todaySummary = dailySummary.find((d) => d.date === today)
-    const todayMin = todaySummary ? Math.round(todaySummary.total_s / 60) : 0
+    const activeSessionSeconds = session.isActive && session.startTime && toLocalDateString(session.startTime) === today
+      ? session.elapsed
+      : 0
+    const todayMin = Math.round(((todaySummary?.total_s ?? 0) + activeSessionSeconds) / 60)
 
     // 连续天数
     const sorted = [...dailySummary].sort((a, b) => b.date.localeCompare(a.date))
@@ -75,13 +85,16 @@ function App(): JSX.Element {
     for (const d of sorted) {
       if (d.date === expected) {
         streak++
-        const dt = new Date(expected + 'T00:00:00')
-        dt.setDate(dt.getDate() - 1)
-        expected = dt.toISOString().slice(0, 10)
+        expected = addLocalDays(expected, -1)
       } else break
     }
 
-    const chord = recognizeChord(Array.from(midi.activeNotes))
+    const chord = recognizeChord(Array.from(midi.activeNotes), settingsHook.settings.chordKeyCenter)
+    const chordName = chord?.name ?? ''
+    if (chordName !== currentObsChordRef.current) {
+      if (currentObsChordRef.current) lastChordRef.current = currentObsChordRef.current
+      currentObsChordRef.current = chordName
+    }
 
     // Map → plain object for IPC serialization
     const activeNotesObj: Record<number, number> = {}
@@ -91,7 +104,7 @@ function App(): JSX.Element {
       isConnected: midi.isConnected,
       isSessionActive: session.isActive,
       elapsed: session.elapsed,
-      currentChord: chord?.name ?? '',
+      currentChord: chordName,
       currentChordQuality: chord ? t(chord.qualityKey) : '',
       lastChord: lastChordRef.current,
       streak,
@@ -108,8 +121,7 @@ function App(): JSX.Element {
       }
     })
 
-    if (chord?.name) lastChordRef.current = chord.name
-  }, [midi.activeNotes, midi.activeNoteVelocities, midi.sustainedNotes, midi.isConnected, session.isActive, session.elapsed, dailySummary, settingsHook.settings, activeSongTitle, t])
+  }, [midi.activeNotes, midi.activeNoteVelocities, midi.sustainedNotes, midi.isConnected, session.isActive, session.elapsed, session.startTime, dailySummary, settingsHook.settings, activeSongTitle, t])
 
   const renderPage = (): JSX.Element => {
     switch (page) {
@@ -121,7 +133,7 @@ function App(): JSX.Element {
           scaleAnalysis={scaleAnalysis}
           settings={settingsHook.settings}
           activeSongId={activeSongId}
-          onActiveSongChange={(id, title) => { setActiveSongId(id); setActiveSongTitle(title) }}
+          onActiveSongChange={handleActiveSongChange}
           onConfirmedChord={handleConfirmedChord}
         />
       )
@@ -140,13 +152,13 @@ function App(): JSX.Element {
       <div className="app-body">
         <header className="app-header">
           <MidiStatus
-          isSupported={midi.isSupported}
-          isConnected={midi.isConnected}
-          devices={midi.devices}
-          permissionState={midi.permissionState}
-          permissionError={midi.permissionError}
-          onRetry={midi.requestAccess}
-        />
+            isSupported={midi.isSupported}
+            isConnected={midi.isConnected}
+            devices={midi.devices}
+            permissionState={midi.permissionState}
+            permissionError={midi.permissionError}
+            onRetry={midi.requestAccess}
+          />
           <div className="lang-switcher">
             <button onClick={() => i18n.changeLanguage('zh')}>中文</button>
             <button onClick={() => i18n.changeLanguage('en')}>English</button>

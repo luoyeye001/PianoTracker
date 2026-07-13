@@ -105,6 +105,16 @@
   text-align: right;
 }
 
+.settings-select {
+  min-width: 120px;
+  padding: 8px 10px;
+  color: var(--text-primary);
+  background: var(--bg-input, var(--bg-secondary));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+
 .settings-hint {
   font-size: 12px;
   color: #f0a500;

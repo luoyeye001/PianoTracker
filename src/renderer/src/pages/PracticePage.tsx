@@ -9,6 +9,7 @@ import { ScalePopover } from '../components/ScalePopover'
 import type { UseScaleAnalysisReturn } from '../hooks/useScaleAnalysis'
 import type { PracticePlan, Song } from '../types/api'
 import type { Settings } from '../hooks/useSettings'
+import { toLocalDateString } from '../utils/date'
 import './PracticePage.css'
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -45,14 +46,21 @@ export function PracticePage({
   const [todayPlan, setTodayPlan] = useState<PracticePlan | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = toLocalDateString()
     window.api?.plans.get(today).then(setTodayPlan).catch(() => {})
-    window.api?.songs.list().then(setSongs).catch(() => {})
   }, [])
+  useEffect(() => {
+    window.api?.songs.list().then((loadedSongs) => {
+      setSongs(loadedSongs)
+      if (activeSongId !== null && !loadedSongs.some((song) => song.id === activeSongId)) {
+        onActiveSongChange(null, '')
+      }
+    }).catch(() => {})
+  }, [activeSongId, onActiveSongChange])
 
   const currentChord = useMemo(
-    () => recognizeChord(Array.from(activeNotes)),
-    [activeNotes]
+    () => recognizeChord(Array.from(activeNotes), settings.chordKeyCenter),
+    [activeNotes, settings.chordKeyCenter]
   )
 
   // confirmedChord：当前和弦持续超过 minHoldMs 后才「确认」
@@ -61,36 +69,44 @@ export function PracticePage({
   const [lastChord, setLastChord] = useState<ChordResult | null>(null)
 
   const currentChordRef = useRef<ChordResult | null>(null)
-  const timerRef        = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const confirmedChordRef = useRef<ChordResult | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onConfirmedChordRef = useRef(onConfirmedChord)
+
+  useEffect(() => {
+    onConfirmedChordRef.current = onConfirmedChord
+  }, [onConfirmedChord])
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
 
-    if (currentChord?.name !== currentChordRef.current?.name) {
+    const chordChanged = currentChord?.name !== currentChordRef.current?.name
+    if (chordChanged) {
       // 和弦变了：如果旧和弦已被确认，移入「上一个」
-      if (confirmedChord) {
-        setLastChord(confirmedChord)
+      if (confirmedChordRef.current) {
+        setLastChord(confirmedChordRef.current)
       }
+      confirmedChordRef.current = null
       setConfirmedChord(null)
       currentChordRef.current = currentChord
+    }
 
-      // 新和弦出现，等待 minHoldMs 后确认
-      if (currentChord) {
-        timerRef.current = setTimeout(() => {
-          setConfirmedChord(currentChord)
-          onConfirmedChord()
-        }, minHoldMs)
-      }
+    // 新和弦出现，或确认前修改了持续时长时，重新开始计时。
+    if (currentChord && !confirmedChordRef.current) {
+      timerRef.current = setTimeout(() => {
+        confirmedChordRef.current = currentChord
+        setConfirmedChord(currentChord)
+        onConfirmedChordRef.current()
+        timerRef.current = null
+      }, minHoldMs)
     }
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [currentChord, minHoldMs, onConfirmedChord]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentChord?.name, minHoldMs]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const activeNoteNames = Array.from(activeNotes)
-    .sort((a, b) => a - b)
-    .map(noteToName)
+  const sortedActiveNotes = Array.from(activeNotes).sort((a, b) => a - b)
 
   if (!isConnected) {
     return (
@@ -176,6 +192,15 @@ export function PracticePage({
             {currentChord ? (
               <>
                 <div className="chord-name-large">{currentChord.name}</div>
+                {currentChord.alternates && currentChord.alternates.length > 0 && (
+                  <div className="chord-alternates">
+                    {currentChord.alternates.map((alternate, index) => (
+                      <div className="chord-alternate" key={`${alternate.name}-${index}`}>
+                        {alternate.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="chord-quality">
                   {t(currentChord.qualityKey)}
                   {currentChord.inversion > 0 && ` · ${t(inversionKey(currentChord.inversion))}`}
@@ -224,20 +249,20 @@ export function PracticePage({
               {t('practiceView.activeNotes')}
               {sustainedNotes.size > 0 && (
                 <span className="sustained-hint">
-                  （{t('practiceView.sustainedCount', { count: sustainedNotes.size })}）
+                  ({t('practiceView.sustainedCount', { count: sustainedNotes.size })})
                 </span>
               )}
             </div>
             <div className="active-notes-list">
-              {activeNoteNames.length === 0 ? (
+              {sortedActiveNotes.length === 0 ? (
                 <span className="active-notes-empty">—</span>
               ) : (
-                activeNoteNames.map((name, i) => {
-                  const noteNum = Array.from(activeNotes).sort((a, b) => a - b)[i]
+                sortedActiveNotes.map((noteNum) => {
+                  const name = noteToName(noteNum)
                   const isSustained = sustainedNotes.has(noteNum)
                   return (
                     <span
-                      key={name}
+                      key={noteNum}
                       className={`active-note-chip ${isSustained ? 'active-note-chip--sustained' : ''}`}
                     >
                       {name}

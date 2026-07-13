@@ -2,6 +2,9 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 const api = {
+  app: {
+    getVersion: () => ipcRenderer.invoke('app:getVersion')
+  },
   sessions: {
     save: (s: object) => ipcRenderer.invoke('sessions:save', s),
     list: () => ipcRenderer.invoke('sessions:list'),

@@ -123,12 +123,16 @@ const resources = {
         halfDim: '半减七和弦', dim7: '减七和弦', aug7: '增七和弦',
         maj6: '大六和弦', min6: '小六和弦',
         dom9: '属九和弦', maj9: '大九和弦', min9: '小九和弦',
-        rootPosition: '原位', first: '第一转位', second: '第二转位', third: '第三转位'
+        rootPosition: '原位', first: '第一转位', second: '第二转位', third: '第三转位',
+        fourth: '第四转位', fifth: '第五转位', sixth: '第六转位'
       },
       settingsView: {
         chordSection:    '和弦识别',
         minHoldLabel:    '和弦最低持续时长',
         minHoldDesc:     '手指抬起时，短于此时长的和弦变化会被忽略，避免误识别。',
+        keyCenterLabel:  '调性拼写',
+        keyCenterDesc:   '与 Chordie 一致，控制升降号与等音拼写，不改变和弦匹配。',
+        noKey:           '无调性',
         hintSensitive:   '当前值较低，可能会识别到抬手时的过渡和弦。',
         hintStrict:      '当前值较高，快速和弦切换可能无法被记录。',
         keyColorSection: '琴键颜色',
@@ -315,12 +319,16 @@ const resources = {
         halfDim: 'Half-Diminished', dim7: 'Diminished 7th', aug7: 'Augmented 7th',
         maj6: 'Major 6th', min6: 'Minor 6th',
         dom9: 'Dominant 9th', maj9: 'Major 9th', min9: 'Minor 9th',
-        rootPosition: 'Root', first: '1st Inv.', second: '2nd Inv.', third: '3rd Inv.'
+        rootPosition: 'Root', first: '1st Inv.', second: '2nd Inv.', third: '3rd Inv.',
+        fourth: '4th Inv.', fifth: '5th Inv.', sixth: '6th Inv.'
       },
       settingsView: {
         chordSection:    'Chord Recognition',
         minHoldLabel:    'Minimum Hold Duration',
         minHoldDesc:     'Chord changes shorter than this are ignored to prevent misdetection when lifting fingers.',
+        keyCenterLabel:  'Key Spelling',
+        keyCenterDesc:   'Matches Chordie’s enharmonic spelling without changing chord matching.',
+        noKey:           'No Key',
         hintSensitive:   'Low value — brief transitions while lifting may be recognized.',
         hintStrict:      'High value — fast chord changes may not be recorded.',
         keyColorSection: 'Key Colors',
@@ -446,10 +454,16 @@ const resources = {
         todayGoal:      '本日の目標: {{min}} 分'
       },
       statsView: {
-        title:            '本日の統計',
+        title:            '練習統計',
+        today:            '今日',
+        week:             '今週',
+        total:            '合計',
         totalPresses:     '総キー入力数',
         uniqueNotes:      '使用した音符',
         duration:         '本日の練習',
+        durationToday:    '今日の練習',
+        durationWeek:     '今週の練習',
+        durationTotal:    '累計練習',
         chordsRecognized: '認識コード数',
         practiceDays:     '練習日数合計',
         heatmapTitle:     '88鍵ヒートマップ',
@@ -501,12 +515,16 @@ const resources = {
         halfDim: 'ハーフディミニッシュ', dim7: 'ディミニッシュ7th', aug7: 'オーギュメント7th',
         maj6: 'メジャー6th', min6: 'マイナー6th',
         dom9: 'ドミナント9th', maj9: 'メジャー9th', min9: 'マイナー9th',
-        rootPosition: '基本形', first: '第1転回', second: '第2転回', third: '第3転回'
+        rootPosition: '基本形', first: '第1転回', second: '第2転回', third: '第3転回',
+        fourth: '第4転回', fifth: '第5転回', sixth: '第6転回'
       },
       settingsView: {
         chordSection:    'コード認識',
         minHoldLabel:    '最低保持時間',
         minHoldDesc:     'これより短いコード変化は無視されます。指を離す際の誤認識を防ぎます。',
+        keyCenterLabel:  '調号表記',
+        keyCenterDesc:   'Chordieと同じ異名同音表記を使用し、コード判定自体は変更しません。',
+        noKey:           'キーなし',
         hintSensitive:   '値が低い — 指を離す際の短い変化が認識される可能性があります。',
         hintStrict:      '値が高い — 素早いコード切替が記録されない可能性があります。',
         keyColorSection: '鍵盤カラー',
