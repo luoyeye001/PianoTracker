@@ -19,10 +19,10 @@ import './styles/App.css'
 
 function App(): JSX.Element {
   const { t, i18n } = useTranslation()
-  const midi = useMidi()
+  const { dailySummary, reload: reloadPracticeHistory, recordNotePress } = usePracticeHistory()
+  const midi = useMidi(recordNotePress)
   const settingsHook = useSettings()
   const scaleAnalysis = useScaleAnalysis(midi)
-  const { dailySummary, reload: reloadPracticeHistory } = usePracticeHistory()
   const session = usePracticeSession(reloadPracticeHistory)
   const [page, setPage] = useState<Page>('practice')
   const [activeSongId, setActiveSongId] = useState<number | null>(null)
@@ -137,7 +137,7 @@ function App(): JSX.Element {
           onConfirmedChord={handleConfirmedChord}
         />
       )
-      case 'stats':    return <StatsPage midi={midi} scaleAnalysis={scaleAnalysis} />
+      case 'stats':    return <StatsPage midi={midi} scaleAnalysis={scaleAnalysis} dailySummary={dailySummary} />
       case 'songs':    return <SongsPage />
       case 'calendar': return <CalendarPage />
       case 'obs':      return <OBSPage settings={settingsHook} />

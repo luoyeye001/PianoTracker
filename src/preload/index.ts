@@ -11,6 +11,9 @@ const api = {
     byDate: (date: string) => ipcRenderer.invoke('sessions:byDate', date),
     dailySummary: () => ipcRenderer.invoke('sessions:dailySummary')
   },
+  stats: {
+    recordNotePress: (date: string, note: number) => ipcRenderer.invoke('stats:recordNotePress', date, note)
+  },
   songs: {
     list: () => ipcRenderer.invoke('songs:list'),
     create: (s: object) => ipcRenderer.invoke('songs:create', s),

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PianoHeatmap } from '../components/PianoHeatmap'
 import { ScalePanel } from '../components/ScalePanel'
-import { usePracticeHistory } from '../hooks/usePracticeHistory'
 import type { UseMidiReturn } from '../hooks/useMidi'
 import type { UseScaleAnalysisReturn } from '../hooks/useScaleAnalysis'
 import type { DailySummary } from '../types/api'
@@ -12,6 +11,7 @@ import './StatsPage.css'
 interface Props {
   midi: UseMidiReturn
   scaleAnalysis: UseScaleAnalysisReturn
+  dailySummary: DailySummary[]
 }
 
 type StatsRange = 'today' | 'week' | 'total'
@@ -35,14 +35,10 @@ function summarize(entries: DailySummary[]) {
   }), { presses: 0, uniqueNotes: 0, minutes: 0, chords: 0, days: 0 })
 }
 
-export function StatsPage({ midi, scaleAnalysis }: Props): JSX.Element {
+export function StatsPage({ midi, scaleAnalysis, dailySummary }: Props): JSX.Element {
   const { t } = useTranslation()
   const { notePressCount, isConnected } = midi
-  const { dailySummary } = usePracticeHistory()
   const [range, setRange] = useState<StatsRange>('today')
-
-  const liveTotalPresses = Object.values(notePressCount).reduce((a, b) => a + b, 0)
-  const liveUniqueNotes = Object.keys(notePressCount).length
 
   const summary = useMemo(() => {
     const now = new Date()
@@ -55,12 +51,8 @@ export function StatsPage({ midi, scaleAnalysis }: Props): JSX.Element {
         ? dailySummary.filter((d) => d.date >= weekStart && d.date <= today)
         : dailySummary
 
-    const base = summarize(entries)
-    if (range === 'today' && entries.length === 0) {
-      return { ...base, presses: liveTotalPresses, uniqueNotes: liveUniqueNotes }
-    }
-    return base
-  }, [dailySummary, liveTotalPresses, liveUniqueNotes, range])
+    return summarize(entries)
+  }, [dailySummary, range])
 
   const rangeLabels: Record<StatsRange, string> = {
     today: t('statsView.today'),

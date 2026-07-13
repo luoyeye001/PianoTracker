@@ -7,6 +7,7 @@ export interface PracticeSession {
   note_presses: number
   unique_notes: number
   chords_recognized: number
+  note_events_recorded?: number
   song_id: number | null
 }
 
@@ -47,6 +48,9 @@ declare global {
         list: () => Promise<PracticeSession[]>
         byDate: (date: string) => Promise<PracticeSession[]>
         dailySummary: () => Promise<DailySummary[]>
+      }
+      stats: {
+        recordNotePress: (date: string, note: number) => Promise<DailySummary>
       }
       songs: {
         list: () => Promise<Song[]>

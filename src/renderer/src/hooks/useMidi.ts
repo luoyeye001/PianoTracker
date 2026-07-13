@@ -41,7 +41,7 @@ export interface UseMidiReturn {
   requestAccess: () => void
 }
 
-export function useMidi(): UseMidiReturn {
+export function useMidi(onNotePress?: (note: number) => void): UseMidiReturn {
   const [isSupported] = useState(() => 'requestMIDIAccess' in navigator)
   const [permissionState, setPermissionState] = useState<UseMidiReturn['permissionState']>('idle')
   const [permissionError, setPermissionError] = useState<string | null>(null)
@@ -59,6 +59,11 @@ export function useMidi(): UseMidiReturn {
   const sustainActiveRef = useRef(false)
   const sustainedNotesRef = useRef<Set<number>>(new Set())
   const physicallyHeldNotesRef = useRef<Set<number>>(new Set())
+  const onNotePressRef = useRef(onNotePress)
+
+  useEffect(() => {
+    onNotePressRef.current = onNotePress
+  }, [onNotePress])
 
   const isConnected = devices.length > 0
 
@@ -124,6 +129,7 @@ export function useMidi(): UseMidiReturn {
       // a single press count as +2/+N.
       if (!wasAlreadyHeld) {
         setNotePressCount((prev) => ({ ...prev, [note]: (prev[note] ?? 0) + 1 }))
+        onNotePressRef.current?.(note)
       }
 
     } else if (isNoteOff) {

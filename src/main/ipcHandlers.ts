@@ -11,6 +11,7 @@ export interface PracticeSession {
   note_presses: number
   unique_notes: number
   chords_recognized: number
+  note_events_recorded?: number
   song_id: number | null
 }
 
@@ -24,8 +25,67 @@ export interface Song {
   updated_at: number
 }
 
+function isValidPracticeDate(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return false
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  return parsed.getUTCFullYear() === year
+    && parsed.getUTCMonth() === month - 1
+    && parsed.getUTCDate() === day
+}
+
 export function registerIpcHandlers(): void {
   const db = getDb()
+
+  // New presses are stored per note immediately. Legacy session metrics stay
+  // in the aggregate, while new session rows are excluded to avoid duplicates.
+  const dailySummaryCte = `
+    WITH session_summary AS (
+      SELECT date,
+             SUM(duration_s) AS total_s,
+             SUM(CASE WHEN note_events_recorded = 1 THEN 0 ELSE note_presses END) AS total_presses,
+             SUM(CASE WHEN note_events_recorded = 1 THEN 0 ELSE unique_notes END) AS total_unique_notes,
+             SUM(chords_recognized) AS total_chords_recognized,
+             COUNT(*) AS count
+      FROM practice_sessions
+      GROUP BY date
+    ),
+    note_summary AS (
+      SELECT date,
+             SUM(press_count) AS total_presses,
+             COUNT(*) AS total_unique_notes
+      FROM daily_note_counts
+      GROUP BY date
+    ),
+    summary_dates AS (
+      SELECT date FROM session_summary
+      UNION
+      SELECT date FROM note_summary
+    )
+  `
+  const dailySummarySelect = `
+    SELECT dates.date,
+           COALESCE(sessions.total_s, 0) AS total_s,
+           COALESCE(sessions.total_presses, 0) + COALESCE(notes.total_presses, 0) AS total_presses,
+           COALESCE(sessions.total_unique_notes, 0) + COALESCE(notes.total_unique_notes, 0) AS total_unique_notes,
+           COALESCE(sessions.total_chords_recognized, 0) AS total_chords_recognized,
+           COALESCE(sessions.count, 0) AS count
+    FROM summary_dates dates
+    LEFT JOIN session_summary sessions ON sessions.date = dates.date
+    LEFT JOIN note_summary notes ON notes.date = dates.date
+  `
+  const dailySummaryStmt = db.prepare(`${dailySummaryCte}${dailySummarySelect} ORDER BY dates.date`)
+  const dailySummaryByDateStmt = db.prepare(`${dailySummaryCte}${dailySummarySelect} WHERE dates.date = ?`)
+  const recordNotePressStmt = db.prepare(`
+    INSERT INTO daily_note_counts (date, note, press_count)
+    VALUES (?, ?, 1)
+    ON CONFLICT(date, note) DO UPDATE SET press_count = press_count + 1
+  `)
 
   // ── Sessions ──────────────────────────────────────────
   ipcMain.handle('sessions:save', (_, session: Omit<PracticeSession, 'id'>) => {
@@ -34,8 +94,8 @@ export function registerIpcHandlers(): void {
       ? requestedSongId
       : null
     const stmt = db.prepare(`
-      INSERT INTO practice_sessions (date, started_at, ended_at, duration_s, note_presses, unique_notes, chords_recognized, song_id)
-      VALUES (@date, @started_at, @ended_at, @duration_s, @note_presses, @unique_notes, @chords_recognized, @song_id)
+      INSERT INTO practice_sessions (date, started_at, ended_at, duration_s, note_presses, unique_notes, chords_recognized, note_events_recorded, song_id)
+      VALUES (@date, @started_at, @ended_at, @duration_s, @note_presses, @unique_notes, @chords_recognized, 1, @song_id)
     `)
     const result = stmt.run({ ...session, song_id: songId })
     return result.lastInsertRowid
@@ -51,17 +111,19 @@ export function registerIpcHandlers(): void {
 
   // 返回每天的练习秒数汇总（用于打卡图）
   ipcMain.handle('sessions:dailySummary', () => {
-    return db.prepare(`
-      SELECT date,
-             SUM(duration_s) as total_s,
-             SUM(note_presses) as total_presses,
-             SUM(unique_notes) as total_unique_notes,
-             SUM(chords_recognized) as total_chords_recognized,
-             COUNT(*) as count
-      FROM practice_sessions
-      GROUP BY date
-      ORDER BY date
-    `).all()
+    return dailySummaryStmt.all()
+  })
+
+  ipcMain.handle('stats:recordNotePress', (_, date: unknown, note: unknown) => {
+    if (!isValidPracticeDate(date)) {
+      throw new Error('Invalid practice date')
+    }
+    if (!Number.isInteger(note) || (note as number) < 21 || (note as number) > 108) {
+      throw new Error('Invalid MIDI note')
+    }
+
+    recordNotePressStmt.run(date, note)
+    return dailySummaryByDateStmt.get(date)
   })
 
   // ── Songs ──────────────────────────────────────────────

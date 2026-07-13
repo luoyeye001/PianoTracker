@@ -37,10 +37,20 @@ function initSchema(db: Database.Database): void {
       note_presses INTEGER DEFAULT 0,     -- 总按键次数
       unique_notes INTEGER DEFAULT 0,      -- 使用过的音符数
       chords_recognized INTEGER DEFAULT 0, -- 确认识别的和弦数
+      note_events_recorded INTEGER DEFAULT 0, -- Presses also exist in daily_note_counts
       song_id     INTEGER REFERENCES songs(id)
     );
 
     CREATE INDEX IF NOT EXISTS idx_sessions_date ON practice_sessions(date);
+
+    CREATE TABLE IF NOT EXISTS daily_note_counts (
+      date        TEXT NOT NULL,
+      note        INTEGER NOT NULL,
+      press_count INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (date, note)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_daily_note_counts_date ON daily_note_counts(date);
 
     CREATE TABLE IF NOT EXISTS practice_plans (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,6 +69,9 @@ function initSchema(db: Database.Database): void {
   }
   if (!existing.has('chords_recognized')) {
     db.exec('ALTER TABLE practice_sessions ADD COLUMN chords_recognized INTEGER DEFAULT 0')
+  }
+  if (!existing.has('note_events_recorded')) {
+    db.exec('ALTER TABLE practice_sessions ADD COLUMN note_events_recorded INTEGER DEFAULT 0')
   }
 }
 
